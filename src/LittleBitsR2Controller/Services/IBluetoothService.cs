@@ -2,25 +2,14 @@ namespace LittleBitsR2Controller.Services;
 
 public interface IBluetoothService
 {
-    Task<bool> IsBluetoothEnabledAsync();
-    Task<IEnumerable<BluetoothDevice>> ScanForDevicesAsync();
-    Task<bool> ConnectToDeviceAsync(BluetoothDevice device);
-    Task DisconnectAsync();
-    Task SendCommandAsync(R2D2Command command);
+    Task<bool> IsBluetoothEnabledAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<BluetoothDevice>> ScanForDevicesAsync(CancellationToken cancellationToken = default);
+    Task<bool> ConnectToDeviceAsync(BluetoothDevice device, CancellationToken cancellationToken = default);
+    Task DisconnectAsync(CancellationToken cancellationToken = default);
+    Task SendDriveCommandAsync(double speed, double turn, CancellationToken cancellationToken = default);
+    Task StopAsync(CancellationToken cancellationToken = default);
     bool IsConnected { get; }
     event EventHandler<bool>? ConnectionStatusChanged;
 }
 
 public record BluetoothDevice(string Id, string Name);
-
-public enum R2D2Command
-{
-    Stop,
-    Forward,
-    Backward,
-    TurnLeft,
-    TurnRight,
-    HeadLeft,
-    HeadRight,
-    HeadCenter
-}

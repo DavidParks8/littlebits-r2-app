@@ -5,9 +5,11 @@ using System.Collections.ObjectModel;
 
 namespace LittleBitsR2Controller.ViewModels;
 
-public partial class ControllerViewModel : ObservableObject
+public partial class ControllerViewModel : ObservableObject, IDisposable
 {
     private readonly IBluetoothService _bluetoothService;
+    private CancellationTokenSource? _cancellationTokenSource;
+    private bool _disposed;
 
     [ObservableProperty]
     private bool _isScanning;
@@ -27,6 +29,7 @@ public partial class ControllerViewModel : ObservableObject
     {
         _bluetoothService = bluetoothService;
         _bluetoothService.ConnectionStatusChanged += OnConnectionStatusChanged;
+        _cancellationTokenSource = new CancellationTokenSource();
     }
 
     [RelayCommand]
@@ -38,19 +41,25 @@ public partial class ControllerViewModel : ObservableObject
 
         try
         {
-            if (!await _bluetoothService.IsBluetoothEnabledAsync())
+            var token = _cancellationTokenSource?.Token ?? CancellationToken.None;
+            
+            if (!await _bluetoothService.IsBluetoothEnabledAsync(token))
             {
                 StatusMessage = "Bluetooth is not enabled";
                 return;
             }
 
-            var devices = await _bluetoothService.ScanForDevicesAsync();
+            var devices = await _bluetoothService.ScanForDevicesAsync(token);
             foreach (var device in devices)
             {
                 Devices.Add(device);
             }
 
             StatusMessage = $"Found {Devices.Count} device(s)";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Scan cancelled";
         }
         catch (Exception ex)
         {
@@ -72,7 +81,8 @@ public partial class ControllerViewModel : ObservableObject
 
         try
         {
-            var success = await _bluetoothService.ConnectToDeviceAsync(SelectedDevice);
+            var token = _cancellationTokenSource?.Token ?? CancellationToken.None;
+            var success = await _bluetoothService.ConnectToDeviceAsync(SelectedDevice, token);
             if (success)
             {
                 IsConnected = true;
@@ -82,6 +92,10 @@ public partial class ControllerViewModel : ObservableObject
             {
                 StatusMessage = $"Failed to connect to {SelectedDevice.Name}";
             }
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Connection cancelled";
         }
         catch (Exception ex)
         {
@@ -96,7 +110,8 @@ public partial class ControllerViewModel : ObservableObject
 
         try
         {
-            await _bluetoothService.DisconnectAsync();
+            var token = _cancellationTokenSource?.Token ?? CancellationToken.None;
+            await _bluetoothService.DisconnectAsync(token);
             IsConnected = false;
             StatusMessage = "Disconnected";
         }
@@ -109,57 +124,49 @@ public partial class ControllerViewModel : ObservableObject
     [RelayCommand]
     private async Task StopAsync()
     {
-        await SendCommandAsync(R2D2Command.Stop);
+        try
+        {
+            var token = _cancellationTokenSource?.Token ?? CancellationToken.None;
+            await _bluetoothService.StopAsync(token);
+            StatusMessage = "Stopped";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error sending stop command: {ex.Message}";
+        }
     }
 
     [RelayCommand]
     private async Task ForwardAsync()
     {
-        await SendCommandAsync(R2D2Command.Forward);
+        await SendDriveCommandAsync(1.0, 0.0);
     }
 
     [RelayCommand]
     private async Task BackwardAsync()
     {
-        await SendCommandAsync(R2D2Command.Backward);
+        await SendDriveCommandAsync(-1.0, 0.0);
     }
 
     [RelayCommand]
     private async Task TurnLeftAsync()
     {
-        await SendCommandAsync(R2D2Command.TurnLeft);
+        await SendDriveCommandAsync(0.5, -1.0);
     }
 
     [RelayCommand]
     private async Task TurnRightAsync()
     {
-        await SendCommandAsync(R2D2Command.TurnRight);
+        await SendDriveCommandAsync(0.5, 1.0);
     }
 
-    [RelayCommand]
-    private async Task HeadLeftAsync()
-    {
-        await SendCommandAsync(R2D2Command.HeadLeft);
-    }
-
-    [RelayCommand]
-    private async Task HeadRightAsync()
-    {
-        await SendCommandAsync(R2D2Command.HeadRight);
-    }
-
-    [RelayCommand]
-    private async Task HeadCenterAsync()
-    {
-        await SendCommandAsync(R2D2Command.HeadCenter);
-    }
-
-    private async Task SendCommandAsync(R2D2Command command)
+    private async Task SendDriveCommandAsync(double speed, double turn)
     {
         try
         {
-            await _bluetoothService.SendCommandAsync(command);
-            StatusMessage = $"Command sent: {command}";
+            var token = _cancellationTokenSource?.Token ?? CancellationToken.None;
+            await _bluetoothService.SendDriveCommandAsync(speed, turn, token);
+            StatusMessage = $"Driving: speed={speed:F1}, turn={turn:F1}";
         }
         catch (Exception ex)
         {
@@ -171,5 +178,16 @@ public partial class ControllerViewModel : ObservableObject
     {
         IsConnected = isConnected;
         StatusMessage = isConnected ? "Connected" : "Disconnected";
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        _bluetoothService.ConnectionStatusChanged -= OnConnectionStatusChanged;
+        _cancellationTokenSource?.Cancel();
+        _cancellationTokenSource?.Dispose();
+        _disposed = true;
     }
 }

@@ -1,4 +1,3 @@
-using Plugin.BLE;
 using Plugin.BLE.Abstractions.Contracts;
 using Plugin.BLE.Abstractions.EventArgs;
 
@@ -12,69 +11,79 @@ public class BluetoothService : IBluetoothService, IDisposable
     private ICharacteristic? _writeCharacteristic;
     private bool _disposed;
     
-    // R2D2 Service and Characteristic UUIDs based on reverse engineering
-    // These UUIDs are typical for BLE devices, may need adjustment based on actual device
-    private const string ServiceUuid = "0000ffe0-0000-1000-8000-00805f9b34fb";
-    private const string CharacteristicUuid = "0000ffe1-0000-1000-8000-00805f9b34fb";
-    
     public event EventHandler<bool>? ConnectionStatusChanged;
     
     public bool IsConnected => _connectedDevice?.State == Plugin.BLE.Abstractions.DeviceState.Connected;
 
-    public BluetoothService()
+    public BluetoothService(IBluetoothLE bluetoothLE, IAdapter adapter)
     {
-        _bluetoothLE = CrossBluetoothLE.Current;
-        _adapter = CrossBluetoothLE.Current.Adapter;
+        _bluetoothLE = bluetoothLE ?? throw new ArgumentNullException(nameof(bluetoothLE));
+        _adapter = adapter ?? throw new ArgumentNullException(nameof(adapter));
         
         _adapter.DeviceConnected += OnDeviceConnected;
         _adapter.DeviceDisconnected += OnDeviceDisconnected;
     }
 
-    public Task<bool> IsBluetoothEnabledAsync()
+    public Task<bool> IsBluetoothEnabledAsync(CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         return Task.FromResult(_bluetoothLE.IsOn);
     }
 
-    public async Task<IEnumerable<BluetoothDevice>> ScanForDevicesAsync()
+    public async Task<IEnumerable<BluetoothDevice>> ScanForDevicesAsync(CancellationToken cancellationToken = default)
     {
         var devices = new List<BluetoothDevice>();
         
-        if (!await IsBluetoothEnabledAsync())
+        if (!await IsBluetoothEnabledAsync(cancellationToken))
         {
             return devices;
         }
 
         var scanResults = new List<IDevice>();
         
-        _adapter.DeviceDiscovered += (s, e) =>
+        EventHandler<Plugin.BLE.Abstractions.EventArgs.DeviceEventArgs>? deviceDiscoveredHandler = null;
+        deviceDiscoveredHandler = (s, e) =>
         {
             if (e.Device != null && !string.IsNullOrEmpty(e.Device.Name))
             {
                 scanResults.Add(e.Device);
             }
         };
-
-        await _adapter.StartScanningForDevicesAsync();
-        await Task.Delay(5000); // Scan for 5 seconds
-        await _adapter.StopScanningForDevicesAsync();
-
-        foreach (var device in scanResults)
+        
+        try
         {
-            if (!string.IsNullOrEmpty(device.Name))
+            _adapter.DeviceDiscovered += deviceDiscoveredHandler;
+
+            await _adapter.StartScanningForDevicesAsync(cancellationToken: cancellationToken);
+            await Task.Delay(5000, cancellationToken); // Scan for 5 seconds
+            await _adapter.StopScanningForDevicesAsync();
+
+            foreach (var device in scanResults)
             {
-                devices.Add(new BluetoothDevice(device.Id.ToString(), device.Name));
+                if (!string.IsNullOrEmpty(device.Name))
+                {
+                    devices.Add(new BluetoothDevice(device.Id.ToString(), device.Name));
+                }
+            }
+        }
+        finally
+        {
+            // Remove event handler to prevent memory leaks
+            if (deviceDiscoveredHandler != null)
+            {
+                _adapter.DeviceDiscovered -= deviceDiscoveredHandler;
             }
         }
 
         return devices;
     }
 
-    public async Task<bool> ConnectToDeviceAsync(BluetoothDevice device)
+    public async Task<bool> ConnectToDeviceAsync(BluetoothDevice device, CancellationToken cancellationToken = default)
     {
         try
         {
             var deviceId = Guid.Parse(device.Id);
-            var bleDevice = await _adapter.ConnectToKnownDeviceAsync(deviceId);
+            var bleDevice = await _adapter.ConnectToKnownDeviceAsync(deviceId, cancellationToken: cancellationToken);
             
             if (bleDevice == null)
             {
@@ -83,18 +92,19 @@ public class BluetoothService : IBluetoothService, IDisposable
 
             _connectedDevice = bleDevice;
 
-            // Get the service and characteristic
-            var services = await bleDevice.GetServicesAsync();
-            var service = services.FirstOrDefault(s => s.Id.ToString().Equals(ServiceUuid, StringComparison.OrdinalIgnoreCase));
+            // Get the service and characteristic using the correct UUIDs from the reverse-engineered protocol
+            var services = await bleDevice.GetServicesAsync(cancellationToken);
+            var service = services.FirstOrDefault(s => 
+                s.Id.ToString().Equals(R2D2Protocol.ServiceUuid, StringComparison.OrdinalIgnoreCase));
             
             if (service != null)
             {
                 var characteristics = await service.GetCharacteristicsAsync();
                 _writeCharacteristic = characteristics.FirstOrDefault(c => 
-                    c.Id.ToString().Equals(CharacteristicUuid, StringComparison.OrdinalIgnoreCase));
+                    c.Id.ToString().Equals(R2D2Protocol.CharacteristicUuid, StringComparison.OrdinalIgnoreCase));
             }
 
-            return IsConnected;
+            return IsConnected && _writeCharacteristic != null;
         }
         catch (Exception ex)
         {
@@ -103,7 +113,7 @@ public class BluetoothService : IBluetoothService, IDisposable
         }
     }
 
-    public async Task DisconnectAsync()
+    public async Task DisconnectAsync(CancellationToken cancellationToken = default)
     {
         if (_connectedDevice != null)
         {
@@ -113,7 +123,7 @@ public class BluetoothService : IBluetoothService, IDisposable
         }
     }
 
-    public async Task SendCommandAsync(R2D2Command command)
+    public async Task SendDriveCommandAsync(double speed, double turn, CancellationToken cancellationToken = default)
     {
         if (_writeCharacteristic == null || !IsConnected)
         {
@@ -122,26 +132,38 @@ public class BluetoothService : IBluetoothService, IDisposable
 
         try
         {
-            // Based on the reverse-engineered protocol from meetar/littlebits-r2d2-controls
-            // Commands are sent as byte arrays
-            byte[] data = command switch
-            {
-                R2D2Command.Stop => new byte[] { 0x00 },
-                R2D2Command.Forward => new byte[] { 0x01, 0xFF }, // Direction + Speed
-                R2D2Command.Backward => new byte[] { 0x02, 0xFF },
-                R2D2Command.TurnLeft => new byte[] { 0x03, 0xFF },
-                R2D2Command.TurnRight => new byte[] { 0x04, 0xFF },
-                R2D2Command.HeadLeft => new byte[] { 0x05 },
-                R2D2Command.HeadRight => new byte[] { 0x06 },
-                R2D2Command.HeadCenter => new byte[] { 0x07 },
-                _ => new byte[] { 0x00 }
-            };
-
-            await _writeCharacteristic.WriteAsync(data);
+            // Send drive command (speed: -1.0 to 1.0)
+            var driveData = R2D2Protocol.GetDriveCommand(speed);
+            await _writeCharacteristic.WriteAsync(driveData);
+            
+            // Small delay between commands
+            await Task.Delay(20, cancellationToken);
+            
+            // Send turn command (turn: -1.0 to 1.0)
+            var turnData = R2D2Protocol.GetTurnCommand(turn);
+            await _writeCharacteristic.WriteAsync(turnData);
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error sending command: {ex.Message}");
+        }
+    }
+
+    public async Task StopAsync(CancellationToken cancellationToken = default)
+    {
+        if (_writeCharacteristic == null || !IsConnected)
+        {
+            return;
+        }
+
+        try
+        {
+            var stopData = R2D2Protocol.GetStopCommand();
+            await _writeCharacteristic.WriteAsync(stopData);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error sending stop command: {ex.Message}");
         }
     }
 

@@ -80,28 +80,12 @@
                     <Button Text="▼ Backward" 
                             Command="{Binding BackwardCommand}"
                             FontSize="18"/>
-                </VerticalStackLayout>
-            </Frame>
-
-            <!-- Head Controls -->
-            <Frame BorderColor="{StaticResource Primary}" Padding="15" IsVisible="{Binding IsConnected}">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="Head Movement" FontSize="20" FontAttributes="Bold"/>
                     
-                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
-                        <Button Text="◄ Left" 
-                                Command="{Binding HeadLeftCommand}"
-                                WidthRequest="120"
-                                FontSize="18"/>
-                        <Button Text="● Center" 
-                                Command="{Binding HeadCenterCommand}"
-                                WidthRequest="120"
-                                FontSize="18"/>
-                        <Button Text="Right ►" 
-                                Command="{Binding HeadRightCommand}"
-                                WidthRequest="120"
-                                FontSize="18"/>
-                    </HorizontalStackLayout>
+                    <Label Text="Note: R2D2 unit does not have head movement motors" 
+                           FontSize="12" 
+                           FontStyle="Italic"
+                           HorizontalOptions="Center"
+                           Margin="0,10,0,0"/>
                 </VerticalStackLayout>
             </Frame>
 
