@@ -72,4 +72,8 @@
 		<PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\LittleBitsR2Controller.Core\LittleBitsR2Controller.Core.csproj" />
+	</ItemGroup>
+
 </Project>

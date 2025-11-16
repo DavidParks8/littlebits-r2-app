@@ -1,5 +1,9 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/LittleBitsR2Controller/LittleBitsR2Controller.csproj" />
+    <Project Path="src/LittleBitsR2Controller.Core/LittleBitsR2Controller.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/LittleBitsR2Controller.Tests/LittleBitsR2Controller.Tests.csproj" />
   </Folder>
 </Solution>

@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace LittleBitsR2Controller.Services;
 
 /// <summary>
@@ -11,9 +13,9 @@ public static class R2D2Protocol
     public const string CharacteristicUuid = "d9d9e9e1-aa4e-4797-8151-cb41cedaf2ad";
 
     /// <summary>
-    /// Drive motor values - index 0 is full forward, index 31 is stop, index 61 is full backward
+    /// Drive motor values - index 0 is full forward, index 31 is stop, index 62 is full backward
     /// </summary>
-    public static readonly string[] DriveValues = 
+    public static readonly ImmutableArray<string> DriveValues = 
     [
         "140202FF659D", // 0 - full forward
         "140202FA3538",
@@ -81,9 +83,9 @@ public static class R2D2Protocol
     ];
 
     /// <summary>
-    /// Turn values - index 0 is full left, index 15 is straight, index 31 is full right
+    /// Turn values - index 0 is full left, index 16 is straight, index 32 is full right
     /// </summary>
-    public static readonly string[] TurnValues =
+    public static readonly ImmutableArray<string> TurnValues =
     [
         "140201FC00AD", // 0 - full left
         "140201EA725A",
@@ -147,9 +149,9 @@ public static class R2D2Protocol
         // Clamp speed to valid range
         speed = Math.Clamp(speed, -1.0, 1.0);
         
-        // Map speed to drive value index (0-61)
-        // -1.0 -> 61 (full backward), 0 -> 31 (stop), 1.0 -> 0 (full forward)
-        int index = (int)Math.Round((1.0 - speed) * 30.5);
+        // Map speed to drive value index (0-62)
+        // -1.0 -> 62 (full backward), 0 -> 31 (stop), 1.0 -> 0 (full forward)
+        int index = (int)Math.Round((1.0 - speed) * 31.0);
         index = Math.Clamp(index, 0, DriveValues.Length - 1);
         
         return HexStringToBytes(DriveValues[index]);
@@ -164,9 +166,9 @@ public static class R2D2Protocol
         // Clamp turn to valid range
         turn = Math.Clamp(turn, -1.0, 1.0);
         
-        // Map turn to turn value index (0-31)
-        // -1.0 -> 0 (full left), 0 -> 15 (straight), 1.0 -> 31 (full right)
-        int index = (int)Math.Round((turn + 1.0) * 15.5);
+        // Map turn to turn value index (0-32)
+        // -1.0 -> 0 (full left), 0 -> 16 (straight), 1.0 -> 32 (full right)
+        int index = (int)Math.Round((turn + 1.0) * 16.0);
         index = Math.Clamp(index, 0, TurnValues.Length - 1);
         
         return HexStringToBytes(TurnValues[index]);
