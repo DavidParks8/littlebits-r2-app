@@ -7,11 +7,16 @@ public class BluetoothService : IBluetoothService, IDisposable
 {
     private readonly IBluetoothLE _bluetoothLE;
     private readonly IAdapter _adapter;
+    private readonly WeakEventManager _connectionStatusChangedEventManager = new();
     private IDevice? _connectedDevice;
     private ICharacteristic? _writeCharacteristic;
     private bool _disposed;
     
-    public event EventHandler<bool>? ConnectionStatusChanged;
+    public event EventHandler<bool>? ConnectionStatusChanged
+    {
+        add => _connectionStatusChangedEventManager.AddEventHandler(value);
+        remove => _connectionStatusChangedEventManager.RemoveEventHandler(value);
+    }
     
     public bool IsConnected => _connectedDevice?.State == Plugin.BLE.Abstractions.DeviceState.Connected;
 
@@ -169,14 +174,14 @@ public class BluetoothService : IBluetoothService, IDisposable
 
     private void OnDeviceConnected(object? sender, DeviceEventArgs e)
     {
-        ConnectionStatusChanged?.Invoke(this, true);
+        _connectionStatusChangedEventManager.HandleEvent(this, true, nameof(ConnectionStatusChanged));
     }
 
     private void OnDeviceDisconnected(object? sender, DeviceEventArgs e)
     {
         _connectedDevice = null;
         _writeCharacteristic = null;
-        ConnectionStatusChanged?.Invoke(this, false);
+        _connectionStatusChangedEventManager.HandleEvent(this, false, nameof(ConnectionStatusChanged));
     }
 
     public void Dispose()
