@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:LittleBitsR2Controller.ViewModels"
+             x:Class="LittleBitsR2Controller.Views.ControllerPage"
+             x:DataType="viewmodels:ControllerViewModel"
+             Title="R2D2 Controller">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <!-- Inverted Bool Converter inline -->
+            <x:Boolean x:Key="True">True</x:Boolean>
+            <x:Boolean x:Key="False">False</x:Boolean>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+            
+            <!-- Status Section -->
+            <Frame BorderColor="{StaticResource Primary}" Padding="10">
+                <Label Text="{Binding StatusMessage}" 
+                       FontSize="16" 
+                       HorizontalOptions="Center"
+                       FontAttributes="Bold"/>
+            </Frame>
+
+            <!-- Connection Section -->
+            <Frame BorderColor="{StaticResource Primary}" Padding="15">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Connection" FontSize="20" FontAttributes="Bold"/>
+                    
+                    <Button Text="Scan for Devices" 
+                            Command="{Binding ScanForDevicesCommand}"/>
+                    
+                    <Picker x:Name="DevicesPicker"
+                            Title="Select R2D2 Device"
+                            ItemsSource="{Binding Devices}"
+                            ItemDisplayBinding="{Binding Name}"
+                            SelectedItem="{Binding SelectedDevice}"/>
+                    
+                    <Button Text="Connect" 
+                            Command="{Binding ConnectCommand}"
+                            IsVisible="{Binding IsConnected, Converter={StaticResource InvertedBoolConverter}}"/>
+                    
+                    <Button Text="Disconnect" 
+                            Command="{Binding DisconnectCommand}"
+                            IsVisible="{Binding IsConnected}"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Movement Controls -->
+            <Frame BorderColor="{StaticResource Primary}" Padding="15" IsVisible="{Binding IsConnected}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Movement" FontSize="20" FontAttributes="Bold"/>
+                    
+                    <!-- Forward Button -->
+                    <Button Text="▲ Forward" 
+                            Command="{Binding ForwardCommand}"
+                            FontSize="18"/>
+                    
+                    <!-- Left and Right Turn Buttons -->
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                        <Button Text="◄ Turn Left" 
+                                Command="{Binding TurnLeftCommand}"
+                                WidthRequest="150"
+                                FontSize="18"/>
+                        <Button Text="■ Stop" 
+                                Command="{Binding StopCommand}"
+                                WidthRequest="100"
+                                FontSize="18"
+                                BackgroundColor="{StaticResource Tertiary}"/>
+                        <Button Text="Turn Right ►" 
+                                Command="{Binding TurnRightCommand}"
+                                WidthRequest="150"
+                                FontSize="18"/>
+                    </HorizontalStackLayout>
+                    
+                    <!-- Backward Button -->
+                    <Button Text="▼ Backward" 
+                            Command="{Binding BackwardCommand}"
+                            FontSize="18"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Head Controls -->
+            <Frame BorderColor="{StaticResource Primary}" Padding="15" IsVisible="{Binding IsConnected}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Head Movement" FontSize="20" FontAttributes="Bold"/>
+                    
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                        <Button Text="◄ Left" 
+                                Command="{Binding HeadLeftCommand}"
+                                WidthRequest="120"
+                                FontSize="18"/>
+                        <Button Text="● Center" 
+                                Command="{Binding HeadCenterCommand}"
+                                WidthRequest="120"
+                                FontSize="18"/>
+                        <Button Text="Right ►" 
+                                Command="{Binding HeadRightCommand}"
+                                WidthRequest="120"
+                                FontSize="18"/>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
