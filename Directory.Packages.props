@@ -1,0 +1,34 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- .NET MAUI -->
+    <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Maui.Essentials" Version="10.0.0" />
+    
+    <!-- Extensions -->
+    <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+    
+    <!-- MVVM Toolkit -->
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    
+    <!-- Bluetooth -->
+    <PackageVersion Include="Plugin.BLE" Version="3.1.0" />
+    
+    <!-- Android Dependencies -->
+    <PackageVersion Include="Xamarin.AndroidX.Core" Version="1.15.0.1" />
+    <PackageVersion Include="Xamarin.AndroidX.Lifecycle.LiveData" Version="2.9.2.1" />
+    <PackageVersion Include="Xamarin.AndroidX.Lifecycle.LiveData.Core.Ktx" Version="2.9.2.1" />
+    
+    <!-- Testing -->
+    <PackageVersion Include="MSTest" Version="3.7.0" />
+    <PackageVersion Include="MSTest.TestAdapter" Version="3.7.0" />
+    <PackageVersion Include="MSTest.TestFramework" Version="3.7.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.2" />
+    <PackageVersion Include="Moq" Version="4.20.72" />
+  </ItemGroup>
+</Project>

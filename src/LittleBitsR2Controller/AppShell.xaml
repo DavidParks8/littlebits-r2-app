@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="LittleBitsR2Controller.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:LittleBitsR2Controller.Views"
+    Shell.FlyoutBehavior="Disabled"
+    Title="R2D2 Controller">
+
+    <ShellContent
+        Title="R2D2 Controller"
+        ContentTemplate="{DataTemplate views:ControllerPage}"
+        Route="ControllerPage" />
+
+</Shell>
