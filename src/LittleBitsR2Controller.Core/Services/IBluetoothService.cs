@@ -8,6 +8,7 @@ public interface IBluetoothService
     Task DisconnectAsync(CancellationToken cancellationToken = default);
     Task SendDriveCommandAsync(double speed, double turn, CancellationToken cancellationToken = default);
     Task StopAsync(CancellationToken cancellationToken = default);
+    Task SendSoundCommandAsync(string soundName, CancellationToken cancellationToken = default);
     bool IsConnected { get; }
     event EventHandler<bool>? ConnectionStatusChanged;
 }

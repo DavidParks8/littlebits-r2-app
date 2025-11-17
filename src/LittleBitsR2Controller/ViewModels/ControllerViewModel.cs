@@ -171,6 +171,21 @@ public partial class ControllerViewModel : ObservableObject, IDisposable
         await SendDriveCommandAsync(0.5, 1.0);
     }
 
+    [RelayCommand]
+    private async Task PlaySoundAsync(string soundName)
+    {
+        try
+        {
+            var token = _cancellationTokenSource?.Token ?? CancellationToken.None;
+            await _bluetoothService.SendSoundCommandAsync(soundName, token);
+            StatusMessage = $"Playing sound: {soundName}";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error playing sound: {ex.Message}";
+        }
+    }
+
     private async Task SendDriveCommandAsync(double speed, double turn)
     {
         try

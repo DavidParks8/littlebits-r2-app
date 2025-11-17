@@ -182,6 +182,31 @@ public class BluetoothService : IBluetoothService, IDisposable
         }
     }
 
+    public async Task SendSoundCommandAsync(string soundName, CancellationToken cancellationToken = default)
+    {
+        if (_writeCharacteristic == null || !IsConnected)
+        {
+            return;
+        }
+
+        try
+        {
+            var soundData = R2D2Protocol.GetSoundCommand(soundName);
+            if (soundData != null)
+            {
+                await _writeCharacteristic.WriteAsync(soundData);
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"Unknown sound effect: {soundName}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error sending sound command: {ex.Message}");
+        }
+    }
+
     private void ResetEmergencyBrakeTimer()
     {
         // Dispose existing timer if it exists

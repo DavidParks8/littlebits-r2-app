@@ -171,4 +171,63 @@ public class R2D2ProtocolTests
         var expectedBytes = R2D2Protocol.HexStringToBytes(R2D2Protocol.DriveValues[R2D2Protocol.DriveStopIndex]);
         CollectionAssert.AreEqual(expectedBytes, result);
     }
+
+    [TestMethod]
+    public void GetSoundCommand_ValidSoundName_ShouldReturnCorrectValue()
+    {
+        // Arrange
+        const string soundName = "beep";
+
+        // Act
+        var result = R2D2Protocol.GetSoundCommand(soundName);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.IsNotEmpty(result);
+        var expectedBytes = R2D2Protocol.HexStringToBytes("1E0115A364");
+        CollectionAssert.AreEqual(expectedBytes, result);
+    }
+
+    [TestMethod]
+    public void GetSoundCommand_CaseInsensitive_ShouldReturnCorrectValue()
+    {
+        // Arrange - test case insensitivity
+        var result1 = R2D2Protocol.GetSoundCommand("BEEP");
+        var result2 = R2D2Protocol.GetSoundCommand("beep");
+        var result3 = R2D2Protocol.GetSoundCommand("BeEp");
+
+        // Assert - all should return the same value
+        Assert.IsNotNull(result1);
+        Assert.IsNotNull(result2);
+        Assert.IsNotNull(result3);
+        CollectionAssert.AreEqual(result1, result2);
+        CollectionAssert.AreEqual(result2, result3);
+    }
+
+    [TestMethod]
+    public void GetSoundCommand_InvalidSoundName_ShouldReturnNull()
+    {
+        // Arrange
+        const string invalidSoundName = "nonexistent_sound";
+
+        // Act
+        var result = R2D2Protocol.GetSoundCommand(invalidSoundName);
+
+        // Assert
+        Assert.IsNull(result);
+    }
+
+    [TestMethod]
+    public void SoundEffects_ShouldContainAllExpectedSounds()
+    {
+        // Assert - verify all expected sounds are present
+        Assert.IsTrue(R2D2Protocol.SoundEffects.ContainsKey("beep"));
+        Assert.IsTrue(R2D2Protocol.SoundEffects.ContainsKey("excited"));
+        Assert.IsTrue(R2D2Protocol.SoundEffects.ContainsKey("grump"));
+        Assert.IsTrue(R2D2Protocol.SoundEffects.ContainsKey("scream"));
+        Assert.IsTrue(R2D2Protocol.SoundEffects.ContainsKey("thinking"));
+        #pragma warning disable MSTEST0037 // Use 'Assert.HasCount' instead of 'Assert.AreEqual'
+        Assert.AreEqual(22, R2D2Protocol.SoundEffects.Count);
+        #pragma warning restore MSTEST0037
+    }
 }

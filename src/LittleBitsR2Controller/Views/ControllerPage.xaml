@@ -103,6 +103,48 @@
                 </VerticalStackLayout>
             </Frame>
 
+            <!-- Sound Effects -->
+            <Frame BorderColor="{StaticResource Primary}" Padding="15" IsVisible="{Binding IsConnected}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Sound Effects" FontSize="20" FontAttributes="Bold"/>
+                    
+                    <!-- Row 1 -->
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                        <Button Text="Beep" Command="{Binding PlaySoundCommand}" CommandParameter="beep" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Excited" Command="{Binding PlaySoundCommand}" CommandParameter="excited" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Cheery" Command="{Binding PlaySoundCommand}" CommandParameter="cheery" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                    </HorizontalStackLayout>
+                    
+                    <!-- Row 2 -->
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                        <Button Text="Grump" Command="{Binding PlaySoundCommand}" CommandParameter="grump" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Scold" Command="{Binding PlaySoundCommand}" CommandParameter="scold" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Sad" Command="{Binding PlaySoundCommand}" CommandParameter="sad" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                    </HorizontalStackLayout>
+                    
+                    <!-- Row 3 -->
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                        <Button Text="Whistle" Command="{Binding PlaySoundCommand}" CommandParameter="whistle" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Scream" Command="{Binding PlaySoundCommand}" CommandParameter="scream" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Surprise" Command="{Binding PlaySoundCommand}" CommandParameter="surprise" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                    </HorizontalStackLayout>
+                    
+                    <!-- Row 4 -->
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                        <Button Text="Wow" Command="{Binding PlaySoundCommand}" CommandParameter="wow" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Worried" Command="{Binding PlaySoundCommand}" CommandParameter="worried" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Thinking" Command="{Binding PlaySoundCommand}" CommandParameter="thinking" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                    </HorizontalStackLayout>
+                    
+                    <!-- Row 5 - More sounds -->
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                        <Button Text="Chatter" Command="{Binding PlaySoundCommand}" CommandParameter="chattering" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Story" Command="{Binding PlaySoundCommand}" CommandParameter="story" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Startup" Command="{Binding PlaySoundCommand}" CommandParameter="startup" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
+
         </VerticalStackLayout>
     </ScrollView>
 
