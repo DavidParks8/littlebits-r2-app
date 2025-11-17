@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:LittleBitsR2Controller.ViewModels"
+             xmlns:controls="clr-namespace:LittleBitsR2Controller.Controls"
              x:Class="LittleBitsR2Controller.Views.ControllerPage"
              x:DataType="viewmodels:ControllerViewModel"
              Title="R2D2 Controller">
@@ -58,10 +59,29 @@
                 </VerticalStackLayout>
             </Frame>
 
+            <!-- Joystick Control (Analog) -->
+            <Frame BorderColor="{StaticResource Primary}" Padding="15" IsVisible="{Binding IsConnected}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Joystick Control (Analog)" FontSize="20" FontAttributes="Bold"/>
+                    <Label Text="Drag the joystick to control R2D2's movement and direction" 
+                           FontSize="14" 
+                           HorizontalOptions="Center"
+                           Margin="0,0,0,10"/>
+                    
+                    <controls:JoystickControl x:Name="Joystick" />
+                    
+                    <Label Text="Forward/backward movement within ±45°, reverse outside that range" 
+                           FontSize="12" 
+                           FontAttributes="Italic"
+                           HorizontalOptions="Center"
+                           Margin="0,10,0,0"/>
+                </VerticalStackLayout>
+            </Frame>
+
             <!-- Movement Controls -->
             <Frame BorderColor="{StaticResource Primary}" Padding="15" IsVisible="{Binding IsConnected}">
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="Movement" FontSize="20" FontAttributes="Bold"/>
+                    <Label Text="Movement (Button Controls)" FontSize="20" FontAttributes="Bold"/>
                     
                     <!-- Forward Button -->
                     <Button Text="▲ Forward" 
