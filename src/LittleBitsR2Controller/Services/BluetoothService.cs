@@ -11,6 +11,8 @@ public class BluetoothService : IBluetoothService, IDisposable
     private IDevice? _connectedDevice;
     private ICharacteristic? _writeCharacteristic;
     private bool _disposed;
+    private DateTime _lastCommandTime = DateTime.MinValue;
+    private Timer? _emergencyBrakeTimer;
     
     public event EventHandler<bool>? ConnectionStatusChanged
     {
@@ -138,13 +140,19 @@ public class BluetoothService : IBluetoothService, IDisposable
 
         try
         {
+            // Update last command time for emergency brake
+            _lastCommandTime = DateTime.Now;
+            
+            // Reset emergency brake timer - auto-stop after 1 second of no commands
+            ResetEmergencyBrakeTimer();
+            
             // Send turn command first (turn: -1.0 to 1.0)
             // This order is critical - turn must be sent before drive
             var turnData = R2D2Protocol.GetTurnCommand(turn);
             await _writeCharacteristic.WriteAsync(turnData);
             
-            // Small delay between commands as required by the protocol
-            await Task.Delay(20, cancellationToken);
+            // Small delay between commands as required by the protocol (100ms from original implementation)
+            await Task.Delay(100, cancellationToken);
             
             // Send drive command (speed: -1.0 to 1.0)
             var driveData = R2D2Protocol.GetDriveCommand(speed);
@@ -174,6 +182,48 @@ public class BluetoothService : IBluetoothService, IDisposable
         }
     }
 
+    public async Task SendSoundCommandAsync(string soundName, CancellationToken cancellationToken = default)
+    {
+        if (_writeCharacteristic == null || !IsConnected)
+        {
+            return;
+        }
+
+        try
+        {
+            var soundData = R2D2Protocol.GetSoundCommand(soundName);
+            if (soundData != null)
+            {
+                await _writeCharacteristic.WriteAsync(soundData);
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"Unknown sound effect: {soundName}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error sending sound command: {ex.Message}");
+        }
+    }
+
+    private void ResetEmergencyBrakeTimer()
+    {
+        // Dispose existing timer if it exists
+        _emergencyBrakeTimer?.Dispose();
+        
+        // Create new timer that triggers after 1 second of no commands
+        _emergencyBrakeTimer = new Timer(async _ =>
+        {
+            var timeSinceLastCommand = (DateTime.Now - _lastCommandTime).TotalMilliseconds;
+            if (timeSinceLastCommand >= 1000 && IsConnected)
+            {
+                System.Diagnostics.Debug.WriteLine("Emergency brake triggered - no commands for 1 second");
+                await StopAsync();
+            }
+        }, null, 1000, Timeout.Infinite);
+    }
+
     private void OnDeviceConnected(object? sender, DeviceEventArgs e)
     {
         _connectionStatusChangedEventManager.HandleEvent(this, true, nameof(ConnectionStatusChanged));
@@ -183,6 +233,8 @@ public class BluetoothService : IBluetoothService, IDisposable
     {
         _connectedDevice = null;
         _writeCharacteristic = null;
+        _emergencyBrakeTimer?.Dispose();
+        _emergencyBrakeTimer = null;
         _connectionStatusChangedEventManager.HandleEvent(this, false, nameof(ConnectionStatusChanged));
     }
 
@@ -202,6 +254,9 @@ public class BluetoothService : IBluetoothService, IDisposable
             // Cleanup managed resources
             _adapter.DeviceConnected -= OnDeviceConnected;
             _adapter.DeviceDisconnected -= OnDeviceDisconnected;
+            
+            _emergencyBrakeTimer?.Dispose();
+            _emergencyBrakeTimer = null;
             
             if (_connectedDevice != null)
             {

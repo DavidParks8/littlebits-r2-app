@@ -171,6 +171,46 @@ public partial class ControllerViewModel : ObservableObject, IDisposable
         await SendDriveCommandAsync(0.5, 1.0);
     }
 
+    [RelayCommand]
+    private async Task PlaySoundAsync(string soundName)
+    {
+        try
+        {
+            var token = _cancellationTokenSource?.Token ?? CancellationToken.None;
+            await _bluetoothService.SendSoundCommandAsync(soundName, token);
+            StatusMessage = $"Playing sound: {soundName}";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error playing sound: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Handle joystick position changes
+    /// </summary>
+    public async Task OnJoystickPositionChanged(double drive, double turn)
+    {
+        await SendDriveCommandAsync(drive, turn);
+    }
+
+    /// <summary>
+    /// Handle joystick release
+    /// </summary>
+    public async Task OnJoystickReleased()
+    {
+        try
+        {
+            var token = _cancellationTokenSource?.Token ?? CancellationToken.None;
+            await _bluetoothService.StopAsync(token);
+            StatusMessage = "Joystick released - stopped";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error stopping: {ex.Message}";
+        }
+    }
+
     private async Task SendDriveCommandAsync(double speed, double turn)
     {
         try

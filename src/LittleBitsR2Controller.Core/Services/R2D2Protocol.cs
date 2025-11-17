@@ -71,7 +71,7 @@ public static class R2D2Protocol
         "140202337D5D",
         "140202304D3E",
         "1402022BEE64",
-        "1402029CE26",
+        "14020229CE26",
         "140202214F2E",
         "140202205F0F",
         "1402021BD837",
@@ -127,6 +127,36 @@ public static class R2D2Protocol
     public const int TurnStraightIndex = 15;
 
     /// <summary>
+    /// R2D2 sound effect commands
+    /// Based on reverse-engineered protocol from https://github.com/meetar/littlebits-r2d2-controls
+    /// </summary>
+    public static readonly ImmutableDictionary<string, string> SoundEffects = new Dictionary<string, string>
+    {
+        { "grump", "1E011B42AA" },
+        { "scold", "1E011A528B" },
+        { "chitter", "1E011962E8" },
+        { "chattering", "1E011872C9" },
+        { "i love you", "1E01178326" },
+        { "bleep", "1E01169307" },
+        { "beep", "1E0115A364" },
+        { "whistle", "1E0114B345" },
+        { "descending", "1E0113C3A2" },
+        { "excited", "1E0112D383" },
+        { "cheery", "1E0111E3E0" },
+        { "sad", "1E0110F3C1" },
+        { "scream", "1E010F101F" },
+        { "startup", "1E010E003E" },
+        { "surprise", "1E010C207C" },
+        { "story", "1E010A40BA" },
+        { "wow", "1E010860F8" },
+        { "thbt", "1E01068136" },
+        { "worried", "1E0104A174" },
+        { "dubious", "1E0102C1B2" },
+        { "startup2", "1E0101F1D1" },
+        { "thinking", "1E0100E1F0" }
+    }.ToImmutableDictionary();
+
+    /// <summary>
     /// Converts a hex string to a byte array
     /// </summary>
     public static byte[] HexStringToBytes(string hex)
@@ -180,5 +210,19 @@ public static class R2D2Protocol
     public static byte[] GetStopCommand()
     {
         return HexStringToBytes(DriveValues[DriveStopIndex]);
+    }
+
+    /// <summary>
+    /// Gets a sound effect command by name
+    /// </summary>
+    /// <param name="soundName">Name of the sound effect (e.g., "beep", "excited")</param>
+    /// <returns>Byte array for the sound command, or null if sound name not found</returns>
+    public static byte[]? GetSoundCommand(string soundName)
+    {
+        if (SoundEffects.TryGetValue(soundName.ToLowerInvariant(), out var hexValue))
+        {
+            return HexStringToBytes(hexValue);
+        }
+        return null;
     }
 }

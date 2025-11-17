@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:LittleBitsR2Controller.ViewModels"
+             xmlns:controls="clr-namespace:LittleBitsR2Controller.Controls"
              x:Class="LittleBitsR2Controller.Views.ControllerPage"
              x:DataType="viewmodels:ControllerViewModel"
              Title="R2D2 Controller">
@@ -58,10 +59,29 @@
                 </VerticalStackLayout>
             </Frame>
 
+            <!-- Joystick Control (Analog) -->
+            <Frame BorderColor="{StaticResource Primary}" Padding="15" IsVisible="{Binding IsConnected}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Joystick Control (Analog)" FontSize="20" FontAttributes="Bold"/>
+                    <Label Text="Drag the joystick to control R2D2's movement and direction" 
+                           FontSize="14" 
+                           HorizontalOptions="Center"
+                           Margin="0,0,0,10"/>
+                    
+                    <controls:JoystickControl x:Name="Joystick" />
+                    
+                    <Label Text="Forward/backward movement within ±45°, reverse outside that range" 
+                           FontSize="12" 
+                           FontAttributes="Italic"
+                           HorizontalOptions="Center"
+                           Margin="0,10,0,0"/>
+                </VerticalStackLayout>
+            </Frame>
+
             <!-- Movement Controls -->
             <Frame BorderColor="{StaticResource Primary}" Padding="15" IsVisible="{Binding IsConnected}">
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="Movement" FontSize="20" FontAttributes="Bold"/>
+                    <Label Text="Movement (Button Controls)" FontSize="20" FontAttributes="Bold"/>
                     
                     <!-- Forward Button -->
                     <Button Text="▲ Forward" 
@@ -100,6 +120,48 @@
                            FontAttributes="Italic"
                            HorizontalOptions="Center"
                            Margin="0,10,0,0"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Sound Effects -->
+            <Frame BorderColor="{StaticResource Primary}" Padding="15" IsVisible="{Binding IsConnected}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Sound Effects" FontSize="20" FontAttributes="Bold"/>
+                    
+                    <!-- Row 1 -->
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                        <Button Text="Beep" Command="{Binding PlaySoundCommand}" CommandParameter="beep" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Excited" Command="{Binding PlaySoundCommand}" CommandParameter="excited" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Cheery" Command="{Binding PlaySoundCommand}" CommandParameter="cheery" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                    </HorizontalStackLayout>
+                    
+                    <!-- Row 2 -->
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                        <Button Text="Grump" Command="{Binding PlaySoundCommand}" CommandParameter="grump" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Scold" Command="{Binding PlaySoundCommand}" CommandParameter="scold" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Sad" Command="{Binding PlaySoundCommand}" CommandParameter="sad" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                    </HorizontalStackLayout>
+                    
+                    <!-- Row 3 -->
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                        <Button Text="Whistle" Command="{Binding PlaySoundCommand}" CommandParameter="whistle" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Scream" Command="{Binding PlaySoundCommand}" CommandParameter="scream" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Surprise" Command="{Binding PlaySoundCommand}" CommandParameter="surprise" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                    </HorizontalStackLayout>
+                    
+                    <!-- Row 4 -->
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                        <Button Text="Wow" Command="{Binding PlaySoundCommand}" CommandParameter="wow" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Worried" Command="{Binding PlaySoundCommand}" CommandParameter="worried" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Thinking" Command="{Binding PlaySoundCommand}" CommandParameter="thinking" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                    </HorizontalStackLayout>
+                    
+                    <!-- Row 5 - More sounds -->
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                        <Button Text="Chatter" Command="{Binding PlaySoundCommand}" CommandParameter="chattering" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Story" Command="{Binding PlaySoundCommand}" CommandParameter="story" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                        <Button Text="Startup" Command="{Binding PlaySoundCommand}" CommandParameter="startup" IsEnabled="{Binding IsConnected}" WidthRequest="100"/>
+                    </HorizontalStackLayout>
                 </VerticalStackLayout>
             </Frame>
 
