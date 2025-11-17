@@ -1,9 +1,5 @@
 ﻿<Project Sdk="MSTest.Sdk">
 
-  <PropertyGroup>
-    <EnableMicrosoftTestingPlatform>true</EnableMicrosoftTestingPlatform>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Moq" />
   </ItemGroup>
