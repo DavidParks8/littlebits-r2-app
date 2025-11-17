@@ -65,7 +65,8 @@ public class BluetoothService : IBluetoothService, IDisposable
 
             foreach (var device in scanResults)
             {
-                if (!string.IsNullOrEmpty(device.Name))
+                // Only include devices with names starting with "w32"
+                if (!string.IsNullOrEmpty(device.Name) && device.Name.StartsWith("w32", StringComparison.OrdinalIgnoreCase))
                 {
                     devices.Add(new BluetoothDevice(device.Id.ToString(), device.Name));
                 }

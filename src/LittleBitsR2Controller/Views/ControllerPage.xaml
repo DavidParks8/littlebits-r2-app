@@ -31,17 +31,26 @@
                     <Label Text="Connection" FontSize="20" FontAttributes="Bold"/>
                     
                     <Button Text="Scan for Devices" 
-                            Command="{Binding ScanForDevicesCommand}"/>
+                            Command="{Binding ScanForDevicesCommand}"
+                            IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}"/>
+                    
+                    <!-- Loading indicator -->
+                    <ActivityIndicator IsRunning="{Binding IsScanning}" 
+                                       IsVisible="{Binding IsScanning}"
+                                       Color="{StaticResource Primary}"
+                                       HeightRequest="30"/>
                     
                     <Picker x:Name="DevicesPicker"
                             Title="Select R2D2 Device"
                             ItemsSource="{Binding Devices}"
                             ItemDisplayBinding="{Binding Name}"
-                            SelectedItem="{Binding SelectedDevice}"/>
+                            SelectedItem="{Binding SelectedDevice}"
+                            IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}"/>
                     
                     <Button Text="Connect" 
                             Command="{Binding ConnectCommand}"
-                            IsVisible="{Binding IsConnected, Converter={StaticResource InvertedBoolConverter}}"/>
+                            IsVisible="{Binding IsConnected, Converter={StaticResource InvertedBoolConverter}}"
+                            IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}"/>
                     
                     <Button Text="Disconnect" 
                             Command="{Binding DisconnectCommand}"
@@ -57,21 +66,25 @@
                     <!-- Forward Button -->
                     <Button Text="▲ Forward" 
                             Command="{Binding ForwardCommand}"
+                            IsEnabled="{Binding IsConnected}"
                             FontSize="18"/>
                     
                     <!-- Left and Right Turn Buttons -->
                     <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
                         <Button Text="◄ Turn Left" 
                                 Command="{Binding TurnLeftCommand}"
+                                IsEnabled="{Binding IsConnected}"
                                 WidthRequest="150"
                                 FontSize="18"/>
                         <Button Text="■ Stop" 
                                 Command="{Binding StopCommand}"
+                                IsEnabled="{Binding IsConnected}"
                                 WidthRequest="100"
                                 FontSize="18"
                                 BackgroundColor="{StaticResource Tertiary}"/>
                         <Button Text="Turn Right ►" 
                                 Command="{Binding TurnRightCommand}"
+                                IsEnabled="{Binding IsConnected}"
                                 WidthRequest="150"
                                 FontSize="18"/>
                     </HorizontalStackLayout>
@@ -79,6 +92,7 @@
                     <!-- Backward Button -->
                     <Button Text="▼ Backward" 
                             Command="{Binding BackwardCommand}"
+                            IsEnabled="{Binding IsConnected}"
                             FontSize="18"/>
                     
                     <Label Text="Note: R2D2 unit does not have head movement motors" 
