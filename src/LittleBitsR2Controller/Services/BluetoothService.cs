@@ -65,7 +65,8 @@ public class BluetoothService : IBluetoothService, IDisposable
 
             foreach (var device in scanResults)
             {
-                if (!string.IsNullOrEmpty(device.Name))
+                // Only include devices with names starting with "w32"
+                if (!string.IsNullOrEmpty(device.Name) && device.Name.StartsWith("w32", StringComparison.OrdinalIgnoreCase))
                 {
                     devices.Add(new BluetoothDevice(device.Id.ToString(), device.Name));
                 }
@@ -137,16 +138,17 @@ public class BluetoothService : IBluetoothService, IDisposable
 
         try
         {
+            // Send turn command first (turn: -1.0 to 1.0)
+            // This order is critical - turn must be sent before drive
+            var turnData = R2D2Protocol.GetTurnCommand(turn);
+            await _writeCharacteristic.WriteAsync(turnData);
+            
+            // Small delay between commands as required by the protocol
+            await Task.Delay(20, cancellationToken);
+            
             // Send drive command (speed: -1.0 to 1.0)
             var driveData = R2D2Protocol.GetDriveCommand(speed);
             await _writeCharacteristic.WriteAsync(driveData);
-            
-            // Small delay between commands
-            await Task.Delay(20, cancellationToken);
-            
-            // Send turn command (turn: -1.0 to 1.0)
-            var turnData = R2D2Protocol.GetTurnCommand(turn);
-            await _writeCharacteristic.WriteAsync(turnData);
         }
         catch (Exception ex)
         {

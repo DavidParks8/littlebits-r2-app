@@ -83,13 +83,15 @@ dotnet build -f net10.0-windows10.0.19041.0
 
 1. Launch the application on your device
 2. Tap "Scan for Devices" to search for nearby R2D2 robots
-3. Select your R2D2 device from the list
-4. Tap "Connect" to establish Bluetooth connection
-5. Use the virtual controller buttons to control your robot:
+   - Only devices with names starting with "w32" will be shown
+   - If only one device is found, it will auto-connect
+   - A loading indicator will show while scanning
+3. If multiple devices are found, select your R2D2 device from the list and tap "Connect"
+4. Use the virtual controller buttons to control your robot:
    - Forward/Backward: Move the robot
    - Turn Left/Right: Rotate the robot
-   - Head controls: Move R2D2's head
    - Stop: Immediately stop all movement
+   - Note: Movement buttons are only enabled when connected
 
 ## Permissions
 

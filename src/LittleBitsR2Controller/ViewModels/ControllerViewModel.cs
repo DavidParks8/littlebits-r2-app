@@ -10,6 +10,8 @@ public partial class ControllerViewModel : ObservableObject, IDisposable
     private readonly IBluetoothService _bluetoothService;
     private CancellationTokenSource? _cancellationTokenSource;
     private bool _disposed;
+    private DateTime _lastCommandTime = DateTime.MinValue;
+    private const int CommandThrottleMs = 150;
 
     [ObservableProperty]
     private bool _isScanning;
@@ -38,6 +40,7 @@ public partial class ControllerViewModel : ObservableObject, IDisposable
         IsScanning = true;
         StatusMessage = "Scanning for devices...";
         Devices.Clear();
+        SelectedDevice = null;
 
         try
         {
@@ -56,6 +59,14 @@ public partial class ControllerViewModel : ObservableObject, IDisposable
             }
 
             StatusMessage = $"Found {Devices.Count} device(s)";
+
+            // Auto-connect if only one device is found
+            if (Devices.Count == 1)
+            {
+                SelectedDevice = Devices[0];
+                StatusMessage = "Auto-connecting to single device...";
+                await ConnectAsync();
+            }
         }
         catch (OperationCanceledException)
         {
@@ -164,6 +175,16 @@ public partial class ControllerViewModel : ObservableObject, IDisposable
     {
         try
         {
+            // Throttle commands to prevent overloading the control hub
+            // Skip commands that come too quickly instead of blocking the UI
+            var timeSinceLastCommand = (DateTime.Now - _lastCommandTime).TotalMilliseconds;
+            if (timeSinceLastCommand < CommandThrottleMs)
+            {
+                // Ignore this command to keep UI responsive
+                return;
+            }
+
+            _lastCommandTime = DateTime.Now;
             var token = _cancellationTokenSource?.Token ?? CancellationToken.None;
             await _bluetoothService.SendDriveCommandAsync(speed, turn, token);
             StatusMessage = $"Driving: speed={speed:F1}, turn={turn:F1}";
