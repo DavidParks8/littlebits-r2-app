@@ -97,7 +97,7 @@
                     
                     <Label Text="Note: R2D2 unit does not have head movement motors" 
                            FontSize="12" 
-                           FontStyle="Italic"
+                           FontAttributes="Italic"
                            HorizontalOptions="Center"
                            Margin="0,10,0,0"/>
                 </VerticalStackLayout>
