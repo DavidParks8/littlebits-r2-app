@@ -139,12 +139,12 @@ public class BluetoothService : IBluetoothService, IDisposable
         try
         {
             // Send turn command first (turn: -1.0 to 1.0)
-            // This order is critical - turn must be sent before drive to prevent deadlock
+            // This order is critical - turn must be sent before drive
             var turnData = R2D2Protocol.GetTurnCommand(turn);
             await _writeCharacteristic.WriteAsync(turnData);
             
-            // Delay between commands to prevent overloading the control hub
-            await Task.Delay(100, cancellationToken);
+            // Small delay between commands as required by the protocol
+            await Task.Delay(20, cancellationToken);
             
             // Send drive command (speed: -1.0 to 1.0)
             var driveData = R2D2Protocol.GetDriveCommand(speed);

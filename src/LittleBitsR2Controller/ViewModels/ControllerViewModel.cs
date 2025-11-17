@@ -176,15 +176,17 @@ public partial class ControllerViewModel : ObservableObject, IDisposable
         try
         {
             // Throttle commands to prevent overloading the control hub
+            // Skip commands that come too quickly instead of blocking the UI
             var timeSinceLastCommand = (DateTime.Now - _lastCommandTime).TotalMilliseconds;
             if (timeSinceLastCommand < CommandThrottleMs)
             {
-                await Task.Delay(CommandThrottleMs - (int)timeSinceLastCommand);
+                // Ignore this command to keep UI responsive
+                return;
             }
 
+            _lastCommandTime = DateTime.Now;
             var token = _cancellationTokenSource?.Token ?? CancellationToken.None;
             await _bluetoothService.SendDriveCommandAsync(speed, turn, token);
-            _lastCommandTime = DateTime.Now;
             StatusMessage = $"Driving: speed={speed:F1}, turn={turn:F1}";
         }
         catch (Exception ex)
