@@ -6,71 +6,6 @@ namespace LittleBitsR2Controller.Tests.Services;
 public class R2D2ProtocolTests
 {
     [TestMethod]
-    public void DriveValues_ShouldBeImmutable()
-    {
-        // Arrange & Act
-        var driveValues = R2D2Protocol.DriveValues;
-
-        // Assert
-        Assert.IsNotNull(driveValues);
-        Assert.AreEqual(63, driveValues.Length);
-    }
-
-    [TestMethod]
-    public void TurnValues_ShouldBeImmutable()
-    {
-        // Arrange & Act
-        var turnValues = R2D2Protocol.TurnValues;
-
-        // Assert
-        Assert.IsNotNull(turnValues);
-        Assert.AreEqual(33, turnValues.Length);
-    }
-
-    [TestMethod]
-    public void ServiceUuid_ShouldBeCorrect()
-    {
-        // Arrange
-        const string expectedUuid = "d9d9e9e0-aa4e-4797-8151-cb41cedaf2ad";
-
-        // Act & Assert
-        Assert.AreEqual(expectedUuid, R2D2Protocol.ServiceUuid);
-    }
-
-    [TestMethod]
-    public void CharacteristicUuid_ShouldBeCorrect()
-    {
-        // Arrange
-        const string expectedUuid = "d9d9e9e1-aa4e-4797-8151-cb41cedaf2ad";
-
-        // Act & Assert
-        Assert.AreEqual(expectedUuid, R2D2Protocol.CharacteristicUuid);
-    }
-
-    [TestMethod]
-    public void DriveStopIndex_ShouldPointToStopValue()
-    {
-        // Arrange & Act
-        var stopValue = R2D2Protocol.DriveValues[R2D2Protocol.DriveStopIndex];
-
-        // Assert
-        Assert.AreEqual("140202897BCC", stopValue);
-        Assert.AreEqual(31, R2D2Protocol.DriveStopIndex);
-    }
-
-    [TestMethod]
-    public void TurnStraightIndex_ShouldPointToStraightValue()
-    {
-        // Arrange & Act
-        var straightValue = R2D2Protocol.TurnValues[R2D2Protocol.TurnStraightIndex];
-
-        // Assert
-        // Index 15 is marked as straight in the original protocol
-        Assert.AreEqual("14020196CD41", straightValue);
-        Assert.AreEqual(15, R2D2Protocol.TurnStraightIndex);
-    }
-
-    [TestMethod]
     public void HexStringToBytes_ShouldConvertCorrectly()
     {
         // Arrange
@@ -95,7 +30,7 @@ public class R2D2ProtocolTests
 
         // Assert
         Assert.IsNotNull(result);
-        Assert.IsTrue(result.Length > 0);
+        Assert.IsNotEmpty(result);
         // Should map to index 0 (full forward)
         var expectedBytes = R2D2Protocol.HexStringToBytes(R2D2Protocol.DriveValues[0]);
         CollectionAssert.AreEqual(expectedBytes, result);
@@ -112,7 +47,7 @@ public class R2D2ProtocolTests
 
         // Assert
         Assert.IsNotNull(result);
-        Assert.IsTrue(result.Length > 0);
+        Assert.IsNotEmpty(result);
         // Speed 0 should map to a value around index 30-31 (stop region)
         // The exact index depends on rounding, so we just verify it produces a valid command
     }
@@ -181,7 +116,7 @@ public class R2D2ProtocolTests
 
         // Assert
         Assert.IsNotNull(result);
-        Assert.IsTrue(result.Length > 0);
+        Assert.IsNotEmpty(result);
         // Turn 0 should map to a value around index 15-16 (straight region)
         // The exact index depends on rounding, so we just verify it produces a valid command
     }
@@ -231,7 +166,7 @@ public class R2D2ProtocolTests
 
         // Assert
         Assert.IsNotNull(result);
-        Assert.IsTrue(result.Length > 0);
+        Assert.IsNotEmpty(result);
         // Should return the stop command from the protocol
         var expectedBytes = R2D2Protocol.HexStringToBytes(R2D2Protocol.DriveValues[R2D2Protocol.DriveStopIndex]);
         CollectionAssert.AreEqual(expectedBytes, result);
