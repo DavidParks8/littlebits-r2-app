@@ -3,6 +3,7 @@ using Plugin.BLE.Abstractions.EventArgs;
 
 namespace LittleBitsR2Controller.Services;
 
+
 public class BluetoothService : IBluetoothService, IDisposable
 {
     private readonly IBluetoothLE _bluetoothLE;
