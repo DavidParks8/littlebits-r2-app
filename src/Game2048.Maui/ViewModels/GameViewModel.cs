@@ -142,14 +142,14 @@ public partial class GameViewModel : ObservableObject
         }
     }
 
-    private void SaveGameState()
+    private async void SaveGameState()
     {
-        var dto = _engine.SaveState();
+        var dto = await _engine.SaveStateAsync();
         var json = JsonSerializer.Serialize(dto);
         Preferences.Set("GameState", json);
     }
 
-    private void LoadGameState()
+    private async void LoadGameState()
     {
         try
         {
@@ -159,7 +159,7 @@ public partial class GameViewModel : ObservableObject
                 var dto = JsonSerializer.Deserialize<GameStateDto>(json);
                 if (dto != null)
                 {
-                    _engine.LoadState(dto);
+                    await _engine.LoadStateAsync(dto);
                 }
             }
         }

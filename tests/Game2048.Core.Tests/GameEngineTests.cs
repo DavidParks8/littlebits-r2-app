@@ -22,7 +22,7 @@ public class GameEngineTests
     }
 
     [TestMethod]
-    public void Move_Left_MergesTilesCorrectly_2_2_2_0()
+    public async Task Move_Left_MergesTilesCorrectly_2_2_2_0()
     {
         var config = new GameConfig { Size = 4 };
         var random = new SeededRandomSource(42);
@@ -34,7 +34,7 @@ public class GameEngineTests
         state.SetTile(0, 1, 2);
         state.SetTile(0, 2, 2);
         state.SetTile(0, 3, 0);
-        engine.LoadState(GameStateDto.FromGameState(state));
+        await engine.LoadStateAsync(GameStateDto.FromGameState(state));
 
         bool moved = engine.Move(Direction.Left);
 
@@ -46,7 +46,7 @@ public class GameEngineTests
     }
 
     [TestMethod]
-    public void Move_Left_MergesTilesCorrectly_2_2_2_2()
+    public async Task Move_Left_MergesTilesCorrectly_2_2_2_2()
     {
         var config = new GameConfig { Size = 4 };
         var random = new SeededRandomSource(42);
@@ -58,7 +58,7 @@ public class GameEngineTests
         state.SetTile(0, 1, 2);
         state.SetTile(0, 2, 2);
         state.SetTile(0, 3, 2);
-        engine.LoadState(GameStateDto.FromGameState(state));
+        await engine.LoadStateAsync(GameStateDto.FromGameState(state));
 
         bool moved = engine.Move(Direction.Left);
 
@@ -70,7 +70,7 @@ public class GameEngineTests
     }
 
     [TestMethod]
-    public void Move_NoOp_DoesNotSpawnTile_DoesNotChangeScore()
+    public async Task Move_NoOp_DoesNotSpawnTile_DoesNotChangeScore()
     {
         var config = new GameConfig { Size = 4 };
         var random = new SeededRandomSource(42);
@@ -81,7 +81,7 @@ public class GameEngineTests
         state.SetTile(0, 0, 2);
         state.Score = 10;
         state.MoveCount = 5;
-        engine.LoadState(GameStateDto.FromGameState(state));
+        await engine.LoadStateAsync(GameStateDto.FromGameState(state));
 
         int tileCountBefore = engine.CurrentState.Board.Count(x => x != 0);
         int scoreBefore = engine.CurrentState.Score;
@@ -97,7 +97,7 @@ public class GameEngineTests
     }
 
     [TestMethod]
-    public void Move_Right_CompressesAndMergesCorrectly()
+    public async Task Move_Right_CompressesAndMergesCorrectly()
     {
         var config = new GameConfig { Size = 4 };
         var random = new SeededRandomSource(42);
@@ -107,7 +107,7 @@ public class GameEngineTests
         var state = new GameState(4);
         state.SetTile(0, 1, 2);
         state.SetTile(0, 2, 2);
-        engine.LoadState(GameStateDto.FromGameState(state));
+        await engine.LoadStateAsync(GameStateDto.FromGameState(state));
 
         bool moved = engine.Move(Direction.Right);
 
@@ -118,7 +118,7 @@ public class GameEngineTests
     }
 
     [TestMethod]
-    public void Move_Up_CompressesAndMergesCorrectly()
+    public async Task Move_Up_CompressesAndMergesCorrectly()
     {
         var config = new GameConfig { Size = 4 };
         var random = new SeededRandomSource(42);
@@ -128,7 +128,7 @@ public class GameEngineTests
         var state = new GameState(4);
         state.SetTile(0, 0, 2);
         state.SetTile(1, 0, 2);
-        engine.LoadState(GameStateDto.FromGameState(state));
+        await engine.LoadStateAsync(GameStateDto.FromGameState(state));
 
         bool moved = engine.Move(Direction.Up);
 
@@ -140,7 +140,7 @@ public class GameEngineTests
     }
 
     [TestMethod]
-    public void Move_Down_CompressesAndMergesCorrectly()
+    public async Task Move_Down_CompressesAndMergesCorrectly()
     {
         var config = new GameConfig { Size = 4 };
         var random = new SeededRandomSource(42);
@@ -150,7 +150,7 @@ public class GameEngineTests
         var state = new GameState(4);
         state.SetTile(2, 0, 2);
         state.SetTile(3, 0, 2);
-        engine.LoadState(GameStateDto.FromGameState(state));
+        await engine.LoadStateAsync(GameStateDto.FromGameState(state));
 
         bool moved = engine.Move(Direction.Down);
 
@@ -190,7 +190,7 @@ public class GameEngineTests
     }
 
     [TestMethod]
-    public void WinCondition_DetectsWhenReaching2048()
+    public async Task WinCondition_DetectsWhenReaching2048()
     {
         var config = new GameConfig { Size = 4, WinTile = 2048 };
         var random = new SeededRandomSource(42);
@@ -200,7 +200,7 @@ public class GameEngineTests
         var state = new GameState(4);
         state.SetTile(0, 0, 1024);
         state.SetTile(0, 1, 1024);
-        engine.LoadState(GameStateDto.FromGameState(state));
+        await engine.LoadStateAsync(GameStateDto.FromGameState(state));
 
         Assert.IsFalse(engine.CurrentState.IsWon);
 
@@ -210,7 +210,7 @@ public class GameEngineTests
     }
 
     [TestMethod]
-    public void WinCondition_StopsGameWhenAllowContinueIsFalse()
+    public async Task WinCondition_StopsGameWhenAllowContinueIsFalse()
     {
         var config = new GameConfig 
         { 
@@ -225,7 +225,7 @@ public class GameEngineTests
         var state = new GameState(4);
         state.SetTile(0, 0, 1024);
         state.SetTile(0, 1, 1024);
-        engine.LoadState(GameStateDto.FromGameState(state));
+        await engine.LoadStateAsync(GameStateDto.FromGameState(state));
 
         engine.Move(Direction.Left);
 
@@ -234,7 +234,7 @@ public class GameEngineTests
     }
 
     [TestMethod]
-    public void GameOver_DetectsWhenNoMovesAvailable()
+    public async Task GameOver_DetectsWhenNoMovesAvailable()
     {
         var config = new GameConfig { Size = 2 };
         var random = new SeededRandomSource(42);
@@ -248,7 +248,7 @@ public class GameEngineTests
         state.SetTile(0, 1, 4);
         state.SetTile(1, 0, 4);
         state.SetTile(1, 1, 2);
-        engine.LoadState(GameStateDto.FromGameState(state));
+        await engine.LoadStateAsync(GameStateDto.FromGameState(state));
 
         // Try a move - should be no-op but trigger game over check
         engine.Move(Direction.Left);
@@ -257,7 +257,7 @@ public class GameEngineTests
     }
 
     [TestMethod]
-    public void Undo_RestoresPreviousState()
+    public async Task Undo_RestoresPreviousState()
     {
         var config = new GameConfig { Size = 4 };
         var random = new SeededRandomSource(42);
@@ -267,7 +267,7 @@ public class GameEngineTests
         var state = new GameState(4);
         state.SetTile(0, 0, 2);
         state.SetTile(0, 1, 2);
-        engine.LoadState(GameStateDto.FromGameState(state));
+        await engine.LoadStateAsync(GameStateDto.FromGameState(state));
 
         int scoreBefore = engine.CurrentState.Score;
         var boardBefore = (int[])engine.CurrentState.Board.Clone();
@@ -284,7 +284,7 @@ public class GameEngineTests
     }
 
     [TestMethod]
-    public void Undo_DoesNotSpawnNewTile()
+    public async Task Undo_DoesNotSpawnNewTile()
     {
         var config = new GameConfig { Size = 4 };
         var random = new SeededRandomSource(42);
@@ -293,7 +293,7 @@ public class GameEngineTests
         var state = new GameState(4);
         state.SetTile(0, 0, 2);
         state.SetTile(0, 1, 2);
-        engine.LoadState(GameStateDto.FromGameState(state));
+        await engine.LoadStateAsync(GameStateDto.FromGameState(state));
 
         engine.Move(Direction.Left);
 
@@ -307,7 +307,7 @@ public class GameEngineTests
     }
 
     [TestMethod]
-    public void Redo_RestoresNextState()
+    public async Task Redo_RestoresNextState()
     {
         var config = new GameConfig { Size = 4 };
         var random = new SeededRandomSource(42);
@@ -316,7 +316,7 @@ public class GameEngineTests
         var state = new GameState(4);
         state.SetTile(0, 0, 2);
         state.SetTile(0, 1, 2);
-        engine.LoadState(GameStateDto.FromGameState(state));
+        await engine.LoadStateAsync(GameStateDto.FromGameState(state));
 
         engine.Move(Direction.Left);
 
@@ -334,7 +334,7 @@ public class GameEngineTests
     }
 
     [TestMethod]
-    public void Redo_ClearsOnNewMove()
+    public async Task Redo_ClearsOnNewMove()
     {
         var config = new GameConfig { Size = 4 };
         var random = new SeededRandomSource(42);
@@ -344,7 +344,7 @@ public class GameEngineTests
         state.SetTile(0, 0, 2);
         state.SetTile(0, 1, 2);
         state.SetTile(1, 0, 4);
-        engine.LoadState(GameStateDto.FromGameState(state));
+        await engine.LoadStateAsync(GameStateDto.FromGameState(state));
 
         engine.Move(Direction.Left);
         engine.Undo();
@@ -357,7 +357,7 @@ public class GameEngineTests
     }
 
     [TestMethod]
-    public void Serialization_SaveAndLoadState()
+    public async Task Serialization_SaveAndLoadState()
     {
         var config = new GameConfig { Size = 4 };
         var random = new SeededRandomSource(42);
@@ -370,12 +370,12 @@ public class GameEngineTests
         state.Score = 100;
         state.MoveCount = 10;
         state.IsWon = true;
-        engine.LoadState(GameStateDto.FromGameState(state));
+        await engine.LoadStateAsync(GameStateDto.FromGameState(state));
 
-        var dto = engine.SaveState();
+        var dto = await engine.SaveStateAsync();
 
         var newEngine = new GameEngine(config, random);
-        newEngine.LoadState(dto);
+        await newEngine.LoadStateAsync(dto);
 
         Assert.AreEqual(engine.CurrentState.Size, newEngine.CurrentState.Size);
         Assert.AreEqual(engine.CurrentState.Score, newEngine.CurrentState.Score);
@@ -385,7 +385,7 @@ public class GameEngineTests
     }
 
     [TestMethod]
-    public void UndoStack_RespectsBoundedCapacity()
+    public async Task UndoStack_RespectsBoundedCapacity()
     {
         var config = new GameConfig { Size = 4 };
         var random = new SeededRandomSource(42);
@@ -396,7 +396,7 @@ public class GameEngineTests
         state.SetTile(0, 1, 2);
         state.SetTile(1, 0, 2);
         state.SetTile(1, 1, 2);
-        engine.LoadState(GameStateDto.FromGameState(state));
+        await engine.LoadStateAsync(GameStateDto.FromGameState(state));
 
         // Make 51 moves (more than max history of 50)
         for (int i = 0; i < 51; i++)
@@ -416,7 +416,7 @@ public class GameEngineTests
     }
 
     [TestMethod]
-    public void MoveCount_IncrementsOnlyOnValidMoves()
+    public async Task MoveCount_IncrementsOnlyOnValidMoves()
     {
         var config = new GameConfig { Size = 4 };
         var random = new SeededRandomSource(42);
@@ -424,7 +424,7 @@ public class GameEngineTests
 
         var state = new GameState(4);
         state.SetTile(0, 0, 2);
-        engine.LoadState(GameStateDto.FromGameState(state));
+        await engine.LoadStateAsync(GameStateDto.FromGameState(state));
 
         int moveCountBefore = engine.CurrentState.MoveCount;
 
@@ -435,7 +435,7 @@ public class GameEngineTests
 
         // Try a valid move
         state.SetTile(0, 1, 2);
-        engine.LoadState(GameStateDto.FromGameState(state));
+        await engine.LoadStateAsync(GameStateDto.FromGameState(state));
         moveCountBefore = engine.CurrentState.MoveCount;
 
         engine.Move(Direction.Left);

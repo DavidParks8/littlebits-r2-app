@@ -8,8 +8,8 @@ public class GameEngine
     private readonly GameConfig _config;
     private readonly IRandomSource _random;
     private GameState _currentState;
-    private readonly List<GameState> _undoStack = new();
-    private readonly List<GameState> _redoStack = new();
+    private readonly Stack<GameState> _undoStack = new();
+    private readonly Stack<GameState> _redoStack = new();
     private const int MaxHistorySize = 50;
 
     public GameState CurrentState => _currentState;
@@ -17,10 +17,10 @@ public class GameEngine
     public bool CanUndo => _undoStack.Count > 0;
     public bool CanRedo => _redoStack.Count > 0;
 
-    public GameEngine(GameConfig config, IRandomSource? randomSource = null)
+    public GameEngine(GameConfig config, IRandomSource randomSource)
     {
         _config = config;
-        _random = randomSource ?? new SystemRandomSource();
+        _random = randomSource;
         _currentState = new GameState(_config.Size);
         InitializeGame();
     }
@@ -73,16 +73,22 @@ public class GameEngine
 
         if (moved)
         {
-            // Save to undo stack
+            // Save to undo stack with bounded capacity
             if (_undoStack.Count >= MaxHistorySize)
-                _undoStack.RemoveAt(0);
-            _undoStack.Add(previousState);
+            {
+                // Remove oldest item - convert to list temporarily for this operation
+                var tempList = _undoStack.ToList();
+                tempList.RemoveAt(0);
+                _undoStack.Clear();
+                foreach (var state in tempList.AsEnumerable().Reverse())
+                    _undoStack.Push(state);
+            }
+            _undoStack.Push(previousState);
 
             // Clear redo stack on new move
             _redoStack.Clear();
 
             // Increment move count
-            _currentState = _currentState.Clone();
             _currentState.MoveCount++;
 
             // Spawn new tile
@@ -91,19 +97,16 @@ public class GameEngine
             // Check win condition
             if (!_currentState.IsWon && HasTileWithValue(_config.WinTile))
             {
-                _currentState = _currentState.Clone();
                 _currentState.IsWon = true;
             }
 
             // Check game over
             if (!_config.AllowContinueAfterWin && _currentState.IsWon)
             {
-                _currentState = _currentState.Clone();
                 _currentState.IsGameOver = true;
             }
             else if (IsGameOverCondition())
             {
-                _currentState = _currentState.Clone();
                 _currentState.IsGameOver = true;
             }
         }
@@ -112,7 +115,6 @@ public class GameEngine
             // Even if no move was made, check if game is over
             if (IsGameOverCondition())
             {
-                _currentState = _currentState.Clone();
                 _currentState.IsGameOver = true;
             }
         }
@@ -139,7 +141,6 @@ public class GameEngine
 
         if (moved)
         {
-            _currentState = _currentState.Clone();
             _currentState.Score += scoreGained;
         }
 
@@ -167,7 +168,6 @@ public class GameEngine
 
         if (moved)
         {
-            _currentState = _currentState.Clone();
             _currentState.Score += scoreGained;
         }
 
@@ -193,7 +193,6 @@ public class GameEngine
 
         if (moved)
         {
-            _currentState = _currentState.Clone();
             _currentState.Score += scoreGained;
         }
 
@@ -221,7 +220,6 @@ public class GameEngine
 
         if (moved)
         {
-            _currentState = _currentState.Clone();
             _currentState.Score += scoreGained;
         }
 
@@ -296,7 +294,6 @@ public class GameEngine
         var pos = emptyPositions[_random.Next(emptyPositions.Count)];
         int value = _random.NextDouble() < 0.9 ? 2 : 4;
 
-        _currentState = _currentState.Clone();
         _currentState.SetTile(pos.row, pos.col, value);
     }
 
@@ -383,12 +380,18 @@ public class GameEngine
         if (_undoStack.Count == 0)
             return false;
 
-        var previousState = _undoStack[_undoStack.Count - 1];
-        _undoStack.RemoveAt(_undoStack.Count - 1);
+        var previousState = _undoStack.Pop();
 
         if (_redoStack.Count >= MaxHistorySize)
-            _redoStack.RemoveAt(0);
-        _redoStack.Add(_currentState);
+        {
+            // Remove oldest item
+            var tempList = _redoStack.ToList();
+            tempList.RemoveAt(0);
+            _redoStack.Clear();
+            foreach (var state in tempList.AsEnumerable().Reverse())
+                _redoStack.Push(state);
+        }
+        _redoStack.Push(_currentState);
 
         _currentState = previousState;
         return true;
@@ -402,32 +405,40 @@ public class GameEngine
         if (_redoStack.Count == 0)
             return false;
 
-        var nextState = _redoStack[_redoStack.Count - 1];
-        _redoStack.RemoveAt(_redoStack.Count - 1);
+        var nextState = _redoStack.Pop();
 
         if (_undoStack.Count >= MaxHistorySize)
-            _undoStack.RemoveAt(0);
-        _undoStack.Add(_currentState);
+        {
+            var tempList = _undoStack.ToList();
+            tempList.RemoveAt(0);
+            _undoStack.Clear();
+            foreach (var state in tempList.AsEnumerable().Reverse())
+                _undoStack.Push(state);
+        }
+        _undoStack.Push(_currentState);
 
         _currentState = nextState;
         return true;
     }
 
     /// <summary>
-    /// Loads a game state from a DTO.
+    /// Loads a game state from a DTO asynchronously.
     /// </summary>
-    public void LoadState(GameStateDto dto)
+    public Task LoadStateAsync(GameStateDto dto)
     {
-        _currentState = dto.ToGameState();
-        _undoStack.Clear();
-        _redoStack.Clear();
+        return Task.Run(() =>
+        {
+            _currentState = dto.ToGameState();
+            _undoStack.Clear();
+            _redoStack.Clear();
+        });
     }
 
     /// <summary>
-    /// Saves the current game state to a DTO.
+    /// Saves the current game state to a DTO asynchronously.
     /// </summary>
-    public GameStateDto SaveState()
+    public Task<GameStateDto> SaveStateAsync()
     {
-        return GameStateDto.FromGameState(_currentState);
+        return Task.Run(() => GameStateDto.FromGameState(_currentState));
     }
 }
