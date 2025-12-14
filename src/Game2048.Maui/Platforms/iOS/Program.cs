@@ -1,7 +1,7 @@
 ﻿using ObjCRuntime;
 using UIKit;
 
-namespace LittleBitsR2Controller;
+namespace Game2048.Maui;
 
 public class Program
 {

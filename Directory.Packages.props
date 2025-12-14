@@ -19,7 +19,7 @@
     <PackageVersion Include="Plugin.BLE" Version="3.1.0" />
     
     <!-- Android Dependencies -->
-    <PackageVersion Include="Xamarin.AndroidX.Core" Version="1.15.0.1" />
+    <PackageVersion Include="Xamarin.AndroidX.Core" Version="1.16.0.3" />
     <PackageVersion Include="Xamarin.AndroidX.Lifecycle.LiveData" Version="2.9.2.1" />
     <PackageVersion Include="Xamarin.AndroidX.Lifecycle.LiveData.Core.Ktx" Version="2.9.2.1" />
     

@@ -1,7 +1,7 @@
 ﻿using Android.App;
 using Android.Runtime;
 
-namespace LittleBitsR2Controller;
+namespace Game2048.Maui;
 
 [Application]
 public class MainApplication : MauiApplication

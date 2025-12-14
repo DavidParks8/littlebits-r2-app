@@ -1,6 +1,6 @@
 ﻿using Foundation;
 
-namespace LittleBitsR2Controller;
+namespace Game2048.Maui;
 
 [Register("AppDelegate")]
 public class AppDelegate : MauiUIApplicationDelegate
