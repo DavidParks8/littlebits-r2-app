@@ -1,0 +1,37 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test-core:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore src/Game2048.Core/Game2048.Core.csproj
+    
+    - name: Build Game2048.Core
+      run: dotnet build src/Game2048.Core/Game2048.Core.csproj --no-restore --configuration Release
+    
+    - name: Build Game2048.Core.Tests
+      run: dotnet build tests/Game2048.Core.Tests/Game2048.Core.Tests.csproj --no-restore --configuration Release
+    
+    - name: Run Game2048.Core Tests
+      run: ./tests/Game2048.Core.Tests/bin/Release/net10.0/Game2048.Core.Tests
+    
+    - name: Restore LittleBitsR2Controller.Core dependencies
+      run: dotnet restore src/LittleBitsR2Controller.Core/LittleBitsR2Controller.Core.csproj
+    
+    - name: Build LittleBitsR2Controller.Core
+      run: dotnet build src/LittleBitsR2Controller.Core/LittleBitsR2Controller.Core.csproj --no-restore --configuration Release

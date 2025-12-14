@@ -2,8 +2,11 @@
   <Folder Name="/src/">
     <Project Path="src/LittleBitsR2Controller/LittleBitsR2Controller.csproj" />
     <Project Path="src/LittleBitsR2Controller.Core/LittleBitsR2Controller.Core.csproj" />
+    <Project Path="src/Game2048.Core/Game2048.Core.csproj" />
+    <Project Path="src/Game2048.Maui/Game2048.Maui.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/LittleBitsR2Controller.Tests/LittleBitsR2Controller.Tests.csproj" />
+    <Project Path="tests/Game2048.Core.Tests/Game2048.Core.Tests.csproj" />
   </Folder>
 </Solution>

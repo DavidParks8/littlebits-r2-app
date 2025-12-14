@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- 2048 Game Colors -->
+    <Color x:Key="Primary">#776E65</Color>
+    <Color x:Key="Background">#FAF8EF</Color>
+    <Color x:Key="BoardBackground">#BBADA0</Color>
+    <Color x:Key="EmptyTile">#CDC1B4</Color>
+    
+    <!-- Tile colors -->
+    <Color x:Key="Tile2">#EEE4DA</Color>
+    <Color x:Key="Tile4">#EDE0C8</Color>
+    <Color x:Key="Tile8">#F2B179</Color>
+    <Color x:Key="Tile16">#F59563</Color>
+    <Color x:Key="Tile32">#F67C5F</Color>
+    <Color x:Key="Tile64">#F65E3B</Color>
+    <Color x:Key="Tile128">#EDCF72</Color>
+    <Color x:Key="Tile256">#EDCC61</Color>
+    <Color x:Key="Tile512">#EDC850</Color>
+    <Color x:Key="Tile1024">#EDC53F</Color>
+    <Color x:Key="Tile2048">#EDC22E</Color>
+    <Color x:Key="TileSuper">#3C3A32</Color>
+    
+    <!-- Text colors -->
+    <Color x:Key="TileTextLight">#776E65</Color>
+    <Color x:Key="TileTextDark">#F9F6F2</Color>
+    
+    <!-- Light theme colors -->
+    <Color x:Key="White">White</Color>
+    <Color x:Key="Black">Black</Color>
+    <Color x:Key="Gray100">#E1E1E1</Color>
+    <Color x:Key="Gray200">#C8C8C8</Color>
+    <Color x:Key="Gray300">#ACACAC</Color>
+    <Color x:Key="Gray400">#919191</Color>
+    <Color x:Key="Gray500">#6E6E6E</Color>
+    <Color x:Key="Gray600">#404040</Color>
+    <Color x:Key="Gray900">#212121</Color>
+    <Color x:Key="Gray950">#141414</Color>
+
+</ResourceDictionary>

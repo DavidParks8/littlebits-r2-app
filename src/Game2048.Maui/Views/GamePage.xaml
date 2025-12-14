@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Game2048.Maui.ViewModels"
+             xmlns:converters="clr-namespace:Game2048.Maui.Converters"
+             x:Class="Game2048.Maui.Views.GamePage"
+             x:DataType="vm:GameViewModel"
+             Title="2048">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:TileValueToColorConverter x:Key="TileColorConverter" />
+            <converters:TileValueToTextColorConverter x:Key="TileTextColorConverter" />
+            <converters:TileValueToTextConverter x:Key="TileTextConverter" />
+            <converters:StringToBoolConverter x:Key="StringToBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid Padding="20" RowSpacing="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header with scores -->
+        <Grid Grid.Row="0" ColumnSpacing="15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Label Grid.Column="0" 
+                   Text="2048" 
+                   FontSize="48" 
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource Primary}"
+                   VerticalOptions="Center" />
+
+            <Border Grid.Column="1" 
+                    BackgroundColor="{StaticResource BoardBackground}"
+                    Padding="15,10"
+                    StrokeThickness="0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="8" />
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="SCORE" 
+                           FontSize="12" 
+                           TextColor="{StaticResource TileTextDark}"
+                           HorizontalOptions="Center" />
+                    <Label Text="{Binding Score}" 
+                           FontSize="20" 
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource White}"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Grid.Column="2" 
+                    BackgroundColor="{StaticResource BoardBackground}"
+                    Padding="15,10"
+                    StrokeThickness="0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="8" />
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="BEST" 
+                           FontSize="12" 
+                           TextColor="{StaticResource TileTextDark}"
+                           HorizontalOptions="Center" />
+                    <Label Text="{Binding BestScore}" 
+                           FontSize="20" 
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource White}"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
+        <!-- Game board -->
+        <Border Grid.Row="1" 
+                BackgroundColor="{StaticResource BoardBackground}"
+                Padding="10"
+                StrokeThickness="0"
+                HorizontalOptions="Center"
+                VerticalOptions="Center">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="12" />
+            </Border.StrokeShape>
+            <Border.GestureRecognizers>
+                <SwipeGestureRecognizer Direction="Up" Command="{Binding MoveCommand}" CommandParameter="Up" />
+                <SwipeGestureRecognizer Direction="Down" Command="{Binding MoveCommand}" CommandParameter="Down" />
+                <SwipeGestureRecognizer Direction="Left" Command="{Binding MoveCommand}" CommandParameter="Left" />
+                <SwipeGestureRecognizer Direction="Right" Command="{Binding MoveCommand}" CommandParameter="Right" />
+            </Border.GestureRecognizers>
+            
+            <Grid x:Name="GameBoard" 
+                  WidthRequest="400" 
+                  HeightRequest="400"
+                  RowSpacing="10" 
+                  ColumnSpacing="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Tiles will be bound here -->
+                <BindableLayout.ItemsSource>
+                    <Binding Path="Tiles" />
+                </BindableLayout.ItemsSource>
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:TileViewModel">
+                        <Border BackgroundColor="{Binding Value, Converter={StaticResource TileColorConverter}}"
+                                StrokeThickness="0">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="8" />
+                            </Border.StrokeShape>
+                            <Grid>
+                                <Grid.Row>
+                                    <Binding Path="Row" />
+                                </Grid.Row>
+                                <Grid.Column>
+                                    <Binding Path="Column" />
+                                </Grid.Column>
+                                <Label Text="{Binding Value, Converter={StaticResource TileTextConverter}}"
+                                       TextColor="{Binding Value, Converter={StaticResource TileTextColorConverter}}"
+                                       FontSize="32"
+                                       FontAttributes="Bold"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </Grid>
+        </Border>
+
+        <!-- Game over/won overlay -->
+        <Border Grid.Row="1"
+                BackgroundColor="#CCBBADA0"
+                IsVisible="{Binding StatusText, Converter={StaticResource StringToBoolConverter}}"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                Padding="40,20"
+                StrokeThickness="0">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="12" />
+            </Border.StrokeShape>
+            <Label Text="{Binding StatusText}"
+                   FontSize="48"
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource Primary}"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center" />
+        </Border>
+
+        <!-- Control buttons -->
+        <Grid Grid.Row="2" ColumnSpacing="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0"
+                    Text="New Game"
+                    Command="{Binding NewGameCommand}"
+                    HorizontalOptions="Fill" />
+
+            <Button Grid.Column="1"
+                    Text="Undo"
+                    Command="{Binding UndoCommand}"
+                    IsEnabled="{Binding CanUndo}"
+                    HorizontalOptions="Fill" />
+
+            <Button Grid.Column="2"
+                    Text="Redo"
+                    Command="{Binding RedoCommand}"
+                    IsEnabled="{Binding CanRedo}"
+                    HorizontalOptions="Fill" />
+        </Grid>
+    </Grid>
+</ContentPage>
