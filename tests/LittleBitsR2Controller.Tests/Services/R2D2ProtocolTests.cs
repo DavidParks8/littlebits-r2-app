@@ -48,8 +48,9 @@ public class R2D2ProtocolTests
         // Assert
         Assert.IsNotNull(result);
         Assert.IsNotEmpty(result);
-        // Speed 0 should map to a value around index 30-31 (stop region)
-        // The exact index depends on rounding, so we just verify it produces a valid command
+        // Speed 0 should map to index 31 (stop): floor(31 * (1 - 0)) = 31
+        var expectedBytes = R2D2Protocol.HexStringToBytes(R2D2Protocol.DriveValues[R2D2Protocol.DriveStopIndex]);
+        CollectionAssert.AreEqual(expectedBytes, result);
     }
 
     [TestMethod]
@@ -100,8 +101,8 @@ public class R2D2ProtocolTests
 
         // Assert
         Assert.IsNotNull(result);
-        // Should map to index 0 (full left)
-        var expectedBytes = R2D2Protocol.HexStringToBytes(R2D2Protocol.TurnValues[0]);
+        // Should map to index 2 (full left in original's range [2,32])
+        var expectedBytes = R2D2Protocol.HexStringToBytes(R2D2Protocol.TurnValues[2]);
         CollectionAssert.AreEqual(expectedBytes, result);
     }
 
@@ -117,8 +118,9 @@ public class R2D2ProtocolTests
         // Assert
         Assert.IsNotNull(result);
         Assert.IsNotEmpty(result);
-        // Turn 0 should map to a value around index 15-16 (straight region)
-        // The exact index depends on rounding, so we just verify it produces a valid command
+        // Turn 0 should map to index 17 (straight ahead per original formula)
+        var expectedBytes = R2D2Protocol.HexStringToBytes(R2D2Protocol.TurnValues[17]);
+        CollectionAssert.AreEqual(expectedBytes, result);
     }
 
     [TestMethod]
@@ -151,8 +153,8 @@ public class R2D2ProtocolTests
         // Assert
         Assert.IsNotNull(resultLeft);
         Assert.IsNotNull(resultRight);
-        // Should clamp to valid range
-        var expectedLeft = R2D2Protocol.HexStringToBytes(R2D2Protocol.TurnValues[0]);
+        // Should clamp to valid range [2, 32]
+        var expectedLeft = R2D2Protocol.HexStringToBytes(R2D2Protocol.TurnValues[2]);
         var expectedRight = R2D2Protocol.HexStringToBytes(R2D2Protocol.TurnValues[32]);
         CollectionAssert.AreEqual(expectedLeft, resultLeft);
         CollectionAssert.AreEqual(expectedRight, resultRight);

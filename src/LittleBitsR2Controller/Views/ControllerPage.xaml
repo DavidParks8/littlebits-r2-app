@@ -2,108 +2,186 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:LittleBitsR2Controller.ViewModels"
+             xmlns:views="clr-namespace:LittleBitsR2Controller.Views"
              x:Class="LittleBitsR2Controller.Views.ControllerPage"
              x:DataType="viewmodels:ControllerViewModel"
-             Title="R2D2 Controller">
+             Title="R2-D2 Controller"
+             BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource Surface}}">
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <!-- Inverted Bool Converter inline -->
             <x:Boolean x:Key="True">True</x:Boolean>
             <x:Boolean x:Key="False">False</x:Boolean>
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="15">
-            
-            <!-- Status Section -->
-            <Frame BorderColor="{StaticResource Primary}" Padding="10">
-                <Label Text="{Binding StatusMessage}" 
-                       FontSize="16" 
-                       HorizontalOptions="Center"
-                       FontAttributes="Bold"/>
-            </Frame>
+    <Grid RowDefinitions="Auto,*">
 
-            <!-- Connection Section -->
-            <Frame BorderColor="{StaticResource Primary}" Padding="15">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="Connection" FontSize="20" FontAttributes="Bold"/>
-                    
-                    <Button Text="Scan for Devices" 
+        <!-- Top bar: status + connection -->
+        <Border Grid.Row="0"
+                BackgroundColor="{AppThemeBinding Light={StaticResource CardLight}, Dark={StaticResource CardDark}}"
+                Stroke="Transparent"
+                Padding="16,10">
+            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="6">
+
+                <!-- Status chip -->
+                <Border Grid.Row="0" Grid.Column="0"
+                        BackgroundColor="{AppThemeBinding Light=#E8F5E9, Dark=#1B3A1B}"
+                        Stroke="Transparent"
+                        StrokeShape="RoundRectangle 12"
+                        Padding="12,6"
+                        HorizontalOptions="Start"
+                        IsVisible="{Binding IsConnected}">
+                    <Label Text="{Binding StatusMessage}" 
+                           FontSize="13" 
+                           TextColor="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}"
+                           FontAttributes="Bold"/>
+                </Border>
+
+                <Label Grid.Row="0" Grid.Column="0"
+                       Text="{Binding StatusMessage}" 
+                       FontSize="13" 
+                       TextColor="{StaticResource Gray500}"
+                       VerticalOptions="Center"
+                       IsVisible="{Binding IsConnected, Converter={StaticResource InvertedBoolConverter}}"/>
+
+                <!-- Connection actions (top-right) -->
+                <HorizontalStackLayout Grid.Row="0" Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                    <Button Text="Scan" 
                             Command="{Binding ScanForDevicesCommand}"
-                            IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}"/>
-                    
-                    <!-- Loading indicator -->
-                    <ActivityIndicator IsRunning="{Binding IsScanning}" 
-                                       IsVisible="{Binding IsScanning}"
-                                       Color="{StaticResource Primary}"
-                                       HeightRequest="30"/>
-                    
-                    <Picker x:Name="DevicesPicker"
-                            Title="Select R2D2 Device"
+                            IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}"
+                            IsVisible="{Binding IsConnected, Converter={StaticResource InvertedBoolConverter}}"
+                            FontSize="12"
+                            Padding="12,6"
+                            HeightRequest="34"
+                            MinimumHeightRequest="34"/>
+                    <Button Text="Connect" 
+                            Command="{Binding ConnectCommand}"
+                            IsVisible="{Binding IsConnected, Converter={StaticResource InvertedBoolConverter}}"
+                            IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}"
+                            FontSize="12"
+                            Padding="12,6"
+                            HeightRequest="34"
+                            MinimumHeightRequest="34"/>
+                    <Button Text="Disconnect" 
+                            Command="{Binding DisconnectCommand}"
+                            IsVisible="{Binding IsConnected}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray600}}"
+                            FontSize="12"
+                            Padding="12,6"
+                            HeightRequest="34"
+                            MinimumHeightRequest="34"/>
+                </HorizontalStackLayout>
+
+                <!-- Device picker row (only when not connected) -->
+                <Grid Grid.Row="1" Grid.ColumnSpan="2" 
+                      IsVisible="{Binding IsConnected, Converter={StaticResource InvertedBoolConverter}}"
+                      ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Picker Title="Select R2-D2 Device"
                             ItemsSource="{Binding Devices}"
                             ItemDisplayBinding="{Binding Name}"
                             SelectedItem="{Binding SelectedDevice}"
                             IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}"/>
-                    
-                    <Button Text="Connect" 
-                            Command="{Binding ConnectCommand}"
-                            IsVisible="{Binding IsConnected, Converter={StaticResource InvertedBoolConverter}}"
-                            IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}"/>
-                    
-                    <Button Text="Disconnect" 
-                            Command="{Binding DisconnectCommand}"
-                            IsVisible="{Binding IsConnected}"/>
-                </VerticalStackLayout>
-            </Frame>
+                    <ActivityIndicator Grid.Column="1" 
+                                       IsRunning="{Binding IsScanning}" 
+                                       IsVisible="{Binding IsScanning}"
+                                       Color="{StaticResource Primary}"
+                                       HeightRequest="24" WidthRequest="24"/>
+                </Grid>
+            </Grid>
+        </Border>
 
-            <!-- Movement Controls -->
-            <Frame BorderColor="{StaticResource Primary}" Padding="15" IsVisible="{Binding IsConnected}">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="Movement" FontSize="20" FontAttributes="Bold"/>
-                    
-                    <!-- Forward Button -->
-                    <Button Text="▲ Forward" 
-                            Command="{Binding ForwardCommand}"
-                            IsEnabled="{Binding IsConnected}"
-                            FontSize="18"/>
-                    
-                    <!-- Left and Right Turn Buttons -->
-                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
-                        <Button Text="◄ Turn Left" 
-                                Command="{Binding TurnLeftCommand}"
-                                IsEnabled="{Binding IsConnected}"
-                                WidthRequest="150"
-                                FontSize="18"/>
-                        <Button Text="■ Stop" 
-                                Command="{Binding StopCommand}"
-                                IsEnabled="{Binding IsConnected}"
-                                WidthRequest="100"
-                                FontSize="18"
-                                BackgroundColor="{StaticResource Tertiary}"/>
-                        <Button Text="Turn Right ►" 
-                                Command="{Binding TurnRightCommand}"
-                                IsEnabled="{Binding IsConnected}"
-                                WidthRequest="150"
-                                FontSize="18"/>
-                    </HorizontalStackLayout>
-                    
-                    <!-- Backward Button -->
-                    <Button Text="▼ Backward" 
-                            Command="{Binding BackwardCommand}"
-                            IsEnabled="{Binding IsConnected}"
-                            FontSize="18"/>
-                    
-                    <Label Text="Note: R2D2 unit does not have head movement motors" 
-                           FontSize="12" 
-                           FontAttributes="Italic"
-                           HorizontalOptions="Center"
-                           Margin="0,10,0,0"/>
-                </VerticalStackLayout>
-            </Frame>
+        <!-- Main scrollable content -->
+        <ScrollView Grid.Row="1" Padding="16,8">
+            <VerticalStackLayout Spacing="12">
 
-        </VerticalStackLayout>
-    </ScrollView>
+                <!-- ═══ JOYSTICK ═══ -->
+                <Border BackgroundColor="{AppThemeBinding Light={StaticResource CardLight}, Dark={StaticResource CardDark}}"
+                        Stroke="Transparent"
+                        StrokeShape="RoundRectangle 16"
+                        Padding="20,16"
+                        InputTransparent="False">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Drive" FontSize="14" FontAttributes="Bold" 
+                               TextColor="{StaticResource Gray500}" 
+                               CharacterSpacing="1.5"/>
+                        <Label Text="Drag to drive · Release to stop" 
+                               FontSize="12" 
+                               TextColor="{StaticResource Gray400}" 
+                               HorizontalOptions="Center"/>
+
+                        <views:JoystickView 
+                            HeightRequest="260" 
+                            WidthRequest="260"
+                            HorizontalOptions="Center"
+                            Margin="0,4"
+                            MovedCommand="{Binding JoystickMovedCommand}"
+                            ReleasedCommand="{Binding JoystickReleasedCommand}"/>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ═══ SOUND EFFECTS ═══ -->
+                <Border BackgroundColor="{AppThemeBinding Light={StaticResource CardLight}, Dark={StaticResource CardDark}}"
+                        Stroke="Transparent"
+                        StrokeShape="RoundRectangle 16"
+                        Padding="20,16"
+                        InputTransparent="False">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Sounds" FontSize="14" FontAttributes="Bold" 
+                               TextColor="{StaticResource Gray500}" 
+                               CharacterSpacing="1.5"/>
+
+                        <FlexLayout Wrap="Wrap" JustifyContent="Center" AlignItems="Start">
+                            <BindableLayout.ItemsSource>
+                                <x:Array Type="{x:Type x:String}">
+                                    <x:String>excited</x:String>
+                                    <x:String>cheery</x:String>
+                                    <x:String>i love you</x:String>
+                                    <x:String>wow!</x:String>
+                                    <x:String>surprise!!</x:String>
+                                    <x:String>chitter</x:String>
+                                    <x:String>chattering</x:String>
+                                    <x:String>whistle</x:String>
+                                    <x:String>bleep</x:String>
+                                    <x:String>beep</x:String>
+                                    <x:String>thinking</x:String>
+                                    <x:String>dubious</x:String>
+                                    <x:String>worried</x:String>
+                                    <x:String>sad</x:String>
+                                    <x:String>grump</x:String>
+                                    <x:String>scold</x:String>
+                                    <x:String>scream!!</x:String>
+                                    <x:String>thbt</x:String>
+                                    <x:String>descending</x:String>
+                                    <x:String>story</x:String>
+                                    <x:String>startup</x:String>
+                                    <x:String>startup 2</x:String>
+                                </x:Array>
+                            </BindableLayout.ItemsSource>
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+                                    <Button Text="{Binding}" 
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ControllerViewModel}}, Path=PlaySoundCommand}"
+                                            CommandParameter="{Binding}"
+                                            Margin="3"
+                                            Padding="10,6"
+                                            FontSize="12"
+                                            CornerRadius="14"
+                                            MinimumWidthRequest="70"
+                                            HeightRequest="34"
+                                            MinimumHeightRequest="34"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource Primary}}"/>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </FlexLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Bottom breathing room -->
+                <BoxView HeightRequest="8" Color="Transparent"/>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
 
 </ContentPage>

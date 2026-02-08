@@ -71,7 +71,7 @@ public static class R2D2Protocol
         "140202337D5D",
         "140202304D3E",
         "1402022BEE64",
-        "1402029CE26",
+        "14020229CE26",
         "140202214F2E",
         "140202205F0F",
         "1402021BD837",
@@ -79,7 +79,7 @@ public static class R2D2Protocol
         "1402021429D8",
         "1402020F8A82",
         "1402020CBAE1",
-        "140202070B8A"  // 61 - full backward
+        "140202070B8A"  // 62 - full backward
     ];
 
     /// <summary>
@@ -119,12 +119,58 @@ public static class R2D2Protocol
         "1402014246B8",
         "1402013CD9E1",
         "1402013548C8",
-        "140201002E3E"  // 31 - full right
+        "140201002E3E"  // 32 - full right
     ];
 
     // Stop command indices
     public const int DriveStopIndex = 31;
-    public const int TurnStraightIndex = 15;
+    // Index 17 is the straight-ahead value used by the original's formula:
+    // Math.floor(((33-2)*(0+limit))/(2*limit)+2) = Math.floor(17.5) = 17
+    public const int TurnStraightIndex = 17;
+
+    /// <summary>
+    /// Sound effect commands - maps effect name to hex command string.
+    /// Based on https://github.com/meetar/littlebits-r2d2-controls
+    /// </summary>
+    public static readonly ImmutableDictionary<string, string> SoundEffects = new Dictionary<string, string>
+    {
+        ["grump"] = "1E011B42AA",
+        ["scold"] = "1E011A528B",
+        ["chitter"] = "1E011962E8",
+        ["chattering"] = "1E011872C9",
+        ["i love you"] = "1E01178326",
+        ["bleep"] = "1E01169307",
+        ["beep"] = "1E0115A364",
+        ["whistle"] = "1E0114B345",
+        ["descending"] = "1E0113C3A2",
+        ["excited"] = "1E0112D383",
+        ["cheery"] = "1E0111E3E0",
+        ["sad"] = "1E0110F3C1",
+        ["scream!!"] = "1E010F101F",
+        ["startup"] = "1E010E003E",
+        ["surprise!!"] = "1E010C207C",
+        ["story"] = "1E010A40BA",
+        ["wow!"] = "1E010860F8",
+        ["thbt"] = "1E01068136",
+        ["worried"] = "1E0104A174",
+        ["dubious"] = "1E0102C1B2",
+        ["startup 2"] = "1E0101F1D1",
+        ["thinking"] = "1E0100E1F0"
+    }.ToImmutableDictionary();
+
+    /// <summary>
+    /// Gets the sound command bytes for a named sound effect.
+    /// </summary>
+    /// <param name="soundName">Name of the sound effect</param>
+    /// <returns>Byte array for the command, or null if sound not found</returns>
+    public static byte[]? GetSoundCommand(string soundName)
+    {
+        if (SoundEffects.TryGetValue(soundName, out var hexCommand))
+        {
+            return HexStringToBytes(hexCommand);
+        }
+        return null;
+    }
 
     /// <summary>
     /// Converts a hex string to a byte array
@@ -149,9 +195,12 @@ public static class R2D2Protocol
         // Clamp speed to valid range
         speed = Math.Clamp(speed, -1.0, 1.0);
         
-        // Map speed to drive value index (0-62)
-        // -1.0 -> 62 (full backward), 0 -> 31 (stop), 1.0 -> 0 (full forward)
-        int index = (int)Math.Round((1.0 - speed) * 31.0);
+        // Map speed to drive value index (0-62) using Math.Floor to match
+        // the original JS: y = Math.floor(yVal)
+        // Forward (speed>0): yVal = ((0-31)*distance)/64 + 31 → index 31→0
+        // Reverse (speed<0): yVal = ((62-31)*distance)/64 + 31 → index 31→62
+        // Combined: index = floor(31 * (1 - speed))
+        int index = (int)Math.Floor(31.0 * (1.0 - speed));
         index = Math.Clamp(index, 0, DriveValues.Length - 1);
         
         return HexStringToBytes(DriveValues[index]);
@@ -166,19 +215,29 @@ public static class R2D2Protocol
         // Clamp turn to valid range
         turn = Math.Clamp(turn, -1.0, 1.0);
         
-        // Map turn to turn value index (0-32)
-        // -1.0 -> 0 (full left), 0 -> 16 (straight), 1.0 -> 32 (full right)
-        int index = (int)Math.Round((turn + 1.0) * 16.0);
-        index = Math.Clamp(index, 0, TurnValues.Length - 1);
+        // Map turn to turn value index [2, 32] using Math.Floor to match
+        // the original JS: x = Math.floor(xVal)
+        // xVal = ((33-2)*(driveangle+limit))/(2*limit) + 2
+        // Simplified: turn [-1,1] → index [2,32], straight (turn=0) → index 17
+        int index = (int)Math.Floor(15.5 * turn + 17.5);
+        index = Math.Clamp(index, 2, TurnValues.Length - 1);
         
         return HexStringToBytes(TurnValues[index]);
     }
 
     /// <summary>
-    /// Gets the stop command
+    /// Gets the drive stop command (index 31 = stopped)
     /// </summary>
     public static byte[] GetStopCommand()
     {
         return HexStringToBytes(DriveValues[DriveStopIndex]);
+    }
+
+    /// <summary>
+    /// Gets the turn straight-ahead command (index 17 = straight)
+    /// </summary>
+    public static byte[] GetTurnStraightCommand()
+    {
+        return HexStringToBytes(TurnValues[TurnStraightIndex]);
     }
 }
