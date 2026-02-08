@@ -27,8 +27,6 @@ public class JoystickView : GraphicsView, IDrawable
     private double _knobX;
     private double _knobY;
     private bool _isDragging;
-    private double _startOffsetX;
-    private double _startOffsetY;
 
     public static readonly BindableProperty MovedCommandProperty =
         BindableProperty.Create(nameof(MovedCommand), typeof(ICommand), typeof(JoystickView));
@@ -54,41 +52,31 @@ public class JoystickView : GraphicsView, IDrawable
         HeightRequest = 200;
         WidthRequest = 200;
 
-        // StartInteraction captures the initial absolute touch position
-        // so the knob jumps to where you touch.
-        StartInteraction += OnStartInteraction;
-
-        // PanGestureRecognizer continues tracking the drag even when
-        // the finger moves outside the view bounds.
+        // PanGestureRecognizer tracks the full drag lifecycle and continues
+        // tracking even when the finger moves outside the view bounds.
+        // TotalX/TotalY are used directly as offset from center, so the
+        // knob always starts at center — standard joystick behaviour.
         var pan = new PanGestureRecognizer();
         pan.PanUpdated += OnPanUpdated;
         GestureRecognizers.Add(pan);
     }
 
-    private void OnStartInteraction(object? sender, TouchEventArgs e)
-    {
-        _isDragging = true;
-        if (e.Touches.Length > 0)
-        {
-            var centerX = Width / 2;
-            var centerY = Height / 2;
-            _startOffsetX = e.Touches[0].X - centerX;
-            _startOffsetY = e.Touches[0].Y - centerY;
-            HandleOffset(_startOffsetX, _startOffsetY, centerX, centerY);
-        }
-    }
-
     private void OnPanUpdated(object? sender, PanUpdatedEventArgs e)
     {
+        if (!IsEnabled) return;
+
         switch (e.StatusType)
         {
+            case GestureStatus.Started:
+                _isDragging = true;
+                Invalidate();
+                break;
+
             case GestureStatus.Running:
-                if (_isDragging)
-                {
-                    var centerX = Width / 2;
-                    var centerY = Height / 2;
-                    HandleOffset(_startOffsetX + e.TotalX, _startOffsetY + e.TotalY, centerX, centerY);
-                }
+                _isDragging = true; // Fallback in case Started didn't fire on this platform
+                var centerX = Width / 2;
+                var centerY = Height / 2;
+                HandleOffset(e.TotalX, e.TotalY, centerX, centerY);
                 break;
 
             case GestureStatus.Completed:
@@ -164,30 +152,54 @@ public class JoystickView : GraphicsView, IDrawable
         }
     }
 
+    protected override void OnPropertyChanged(string? propertyName = null)
+    {
+        base.OnPropertyChanged(propertyName);
+        if (propertyName == nameof(IsEnabled))
+        {
+            if (!IsEnabled)
+            {
+                _isDragging = false;
+                _knobX = 0;
+                _knobY = 0;
+            }
+            Invalidate();
+        }
+    }
+
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
         var centerX = dirtyRect.Width / 2;
         var centerY = dirtyRect.Height / 2;
         var outerRadius = Math.Min(centerX, centerY) - 5;
         var knobRadius = 30f;
+        var disabled = !IsEnabled;
 
         // Outer ring — subtle border
-        canvas.StrokeColor = Color.FromRgba(100, 140, 180, 60);
+        canvas.StrokeColor = disabled
+            ? Color.FromRgba(130, 130, 130, 35)
+            : Color.FromRgba(100, 140, 180, 60);
         canvas.StrokeSize = 2;
         canvas.DrawCircle(centerX, centerY, (float)outerRadius);
 
         // Base fill — soft translucent dark
-        canvas.FillColor = Color.FromRgba(30, 50, 70, 90);
+        canvas.FillColor = disabled
+            ? Color.FromRgba(50, 50, 50, 50)
+            : Color.FromRgba(30, 50, 70, 90);
         canvas.FillCircle(centerX, centerY, (float)outerRadius);
 
         // Inner track ring (where the knob travels)
         var trackRadius = outerRadius - 20;
-        canvas.StrokeColor = Color.FromRgba(100, 140, 180, 40);
+        canvas.StrokeColor = disabled
+            ? Color.FromRgba(130, 130, 130, 25)
+            : Color.FromRgba(100, 140, 180, 40);
         canvas.StrokeSize = 1;
         canvas.DrawCircle(centerX, centerY, (float)trackRadius);
 
         // Crosshairs — thin, subtle
-        canvas.StrokeColor = Color.FromRgba(100, 160, 220, 35);
+        canvas.StrokeColor = disabled
+            ? Color.FromRgba(130, 130, 130, 20)
+            : Color.FromRgba(100, 160, 220, 35);
         canvas.StrokeSize = 1;
         canvas.DrawLine(centerX, centerY - (float)outerRadius + 10, centerX, centerY + (float)outerRadius - 10);
         canvas.DrawLine(centerX - (float)outerRadius + 10, centerY, centerX + (float)outerRadius - 10, centerY);
@@ -195,11 +207,15 @@ public class JoystickView : GraphicsView, IDrawable
         // Deadzone indicator
         var maxPixelDist = outerRadius - 15;
         var deadzoneRadius = (float)(Deadzone / MaxDistance * maxPixelDist);
-        canvas.FillColor = Color.FromRgba(100, 160, 220, 20);
+        canvas.FillColor = disabled
+            ? Color.FromRgba(130, 130, 130, 10)
+            : Color.FromRgba(100, 160, 220, 20);
         canvas.FillCircle(centerX, centerY, deadzoneRadius);
 
         // Direction arrows — small, elegant
-        canvas.FontColor = Color.FromRgba(140, 180, 220, 120);
+        canvas.FontColor = disabled
+            ? Color.FromRgba(140, 140, 140, 50)
+            : Color.FromRgba(140, 180, 220, 120);
         canvas.FontSize = 14;
         canvas.DrawString("▲", centerX, centerY - (float)outerRadius + 12, HorizontalAlignment.Center);
         canvas.DrawString("▼", centerX, centerY + (float)outerRadius - 22, HorizontalAlignment.Center);
@@ -209,11 +225,21 @@ public class JoystickView : GraphicsView, IDrawable
         // Knob shadow
         var knobPosX = centerX + (float)_knobX;
         var knobPosY = centerY + (float)_knobY;
-        canvas.FillColor = Color.FromRgba(0, 0, 0, 40);
+        canvas.FillColor = Color.FromRgba(0, 0, 0, disabled ? 15 : 40);
         canvas.FillCircle(knobPosX + 2, knobPosY + 2, knobRadius);
 
-        // Knob — blue when active, neutral at rest
-        if (_isDragging)
+        // Knob — blue when active, gray when disabled, neutral at rest
+        if (disabled)
+        {
+            canvas.FillColor = Color.FromRgba(130, 130, 130, 120);
+            canvas.FillCircle(knobPosX, knobPosY, knobRadius);
+            canvas.StrokeColor = Color.FromRgba(160, 160, 160, 80);
+            canvas.StrokeSize = 2;
+            canvas.DrawCircle(knobPosX, knobPosY, knobRadius);
+            canvas.FillColor = Color.FromRgba(170, 170, 170, 60);
+            canvas.FillCircle(knobPosX, knobPosY, 4);
+        }
+        else if (_isDragging)
         {
             canvas.FillColor = Color.FromRgba(21, 101, 192, 230);  // Primary blue
             canvas.FillCircle(knobPosX, knobPosY, knobRadius);

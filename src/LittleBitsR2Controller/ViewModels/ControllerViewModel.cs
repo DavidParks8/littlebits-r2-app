@@ -33,6 +33,9 @@ public partial class ControllerViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _statusMessage = "Ready";
 
+    [ObservableProperty]
+    private bool _showDeviceSelector;
+
     public ObservableCollection<BluetoothDevice> Devices { get; } = new();
 
     public IReadOnlyList<string> SoundEffectNames { get; } = [.. R2D2Protocol.SoundEffects.Keys];
@@ -69,6 +72,7 @@ public partial class ControllerViewModel : ObservableObject, IDisposable
             }
 
             StatusMessage = $"Found {Devices.Count} device(s)";
+            ShowDeviceSelector = Devices.Count > 1;
 
             // Auto-connect if only one device is found
             if (Devices.Count == 1)
@@ -278,6 +282,7 @@ public partial class ControllerViewModel : ObservableObject, IDisposable
     {
         if (value)
         {
+            ShowDeviceSelector = false;
             _safetyTimer = new System.Threading.Timer(SafetyTimerCallback, null, 1000, 500);
         }
         else

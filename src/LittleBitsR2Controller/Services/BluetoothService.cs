@@ -20,6 +20,11 @@ public class BluetoothService : IBluetoothService, IDisposable
     private const int ReconnectDelayMs = 5000;
     private const int ReconnectMaxAttempts = 60; // ~5 minutes
 
+    // Serialises multi-write command sequences (drive, stop, sound) so they
+    // cannot interleave.  Without this, a drive command's delayed second
+    // write can fire after a stop command, overriding it.
+    private readonly SemaphoreSlim _commandLock = new(1, 1);
+
     // Connection health monitoring — detects silent disconnects
     // (e.g. device powered off without a BLE disconnect event)
     private System.Threading.Timer? _healthCheckTimer;
@@ -276,6 +281,7 @@ public class BluetoothService : IBluetoothService, IDisposable
             return;
         }
 
+        await _commandLock.WaitAsync(cancellationToken);
         try
         {
             // Send turn command first, then drive after a delay.
@@ -296,6 +302,10 @@ public class BluetoothService : IBluetoothService, IDisposable
         {
             System.Diagnostics.Debug.WriteLine($"Error sending command: {ex.Message}");
         }
+        finally
+        {
+            _commandLock.Release();
+        }
     }
 
     public async Task StopAsync(CancellationToken cancellationToken = default)
@@ -305,6 +315,7 @@ public class BluetoothService : IBluetoothService, IDisposable
             return;
         }
 
+        await _commandLock.WaitAsync(cancellationToken);
         try
         {
             // Original stop() sets y=31 and calls driveAndTurn() which sends the last
@@ -324,6 +335,10 @@ public class BluetoothService : IBluetoothService, IDisposable
         {
             System.Diagnostics.Debug.WriteLine($"Error sending stop command: {ex.Message}");
         }
+        finally
+        {
+            _commandLock.Release();
+        }
     }
 
     public async Task SendSoundCommandAsync(string soundName, CancellationToken cancellationToken = default)
@@ -333,6 +348,7 @@ public class BluetoothService : IBluetoothService, IDisposable
             return;
         }
 
+        await _commandLock.WaitAsync(cancellationToken);
         try
         {
             var soundData = R2D2Protocol.GetSoundCommand(soundName);
@@ -344,6 +360,10 @@ public class BluetoothService : IBluetoothService, IDisposable
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error sending sound command: {ex.Message}");
+        }
+        finally
+        {
+            _commandLock.Release();
         }
     }
 
@@ -568,6 +588,8 @@ public class BluetoothService : IBluetoothService, IDisposable
             {
                 _ = DisconnectAsync(); // Fire and forget
             }
+
+            _commandLock.Dispose();
         }
 
         _disposed = true;

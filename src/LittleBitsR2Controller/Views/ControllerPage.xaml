@@ -12,6 +12,44 @@
         <ResourceDictionary>
             <x:Boolean x:Key="True">True</x:Boolean>
             <x:Boolean x:Key="False">False</x:Boolean>
+            <Style x:Key="SoundButtonStyle" TargetType="Button">
+                <Setter Property="Margin" Value="3"/>
+                <Setter Property="Padding" Value="10,6"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="CornerRadius" Value="14"/>
+                <Setter Property="MinimumWidthRequest" Value="70"/>
+                <Setter Property="HeightRequest" Value="34"/>
+                <Setter Property="MinimumHeightRequest" Value="34"/>
+                <Setter Property="VisualStateManager.VisualStateGroups">
+                    <VisualStateGroupList>
+                        <VisualStateGroup x:Name="CommonStates">
+                            <VisualState x:Name="Normal">
+                                <VisualState.Setters>
+                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource Primary}}"/>
+                                    <Setter Property="TextColor" Value="White"/>
+                                </VisualState.Setters>
+                            </VisualState>
+                            <VisualState x:Name="PointerOver">
+                                <VisualState.Setters>
+                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource Primary}}"/>
+                                </VisualState.Setters>
+                            </VisualState>
+                            <VisualState x:Name="Pressed">
+                                <VisualState.Setters>
+                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource Primary}}"/>
+                                    <Setter Property="Opacity" Value="0.8"/>
+                                </VisualState.Setters>
+                            </VisualState>
+                            <VisualState x:Name="Disabled">
+                                <VisualState.Setters>
+                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#B0BEC5, Dark=#455A64}"/>
+                                    <Setter Property="TextColor" Value="{AppThemeBinding Light=#78909C, Dark=#90A4AE}"/>
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateGroupList>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -57,7 +95,7 @@
                             MinimumHeightRequest="34"/>
                     <Button Text="Connect" 
                             Command="{Binding ConnectCommand}"
-                            IsVisible="{Binding IsConnected, Converter={StaticResource InvertedBoolConverter}}"
+                            IsVisible="{Binding ShowDeviceSelector}"
                             IsEnabled="{Binding IsScanning, Converter={StaticResource InvertedBoolConverter}}"
                             FontSize="12"
                             Padding="12,6"
@@ -73,9 +111,9 @@
                             MinimumHeightRequest="34"/>
                 </HorizontalStackLayout>
 
-                <!-- Device picker row (only when not connected) -->
+                <!-- Device picker row (only when multiple devices found) -->
                 <Grid Grid.Row="1" Grid.ColumnSpan="2" 
-                      IsVisible="{Binding IsConnected, Converter={StaticResource InvertedBoolConverter}}"
+                      IsVisible="{Binding ShowDeviceSelector}"
                       ColumnDefinitions="*,Auto" ColumnSpacing="8">
                     <Picker Title="Select R2-D2 Device"
                             ItemsSource="{Binding Devices}"
@@ -104,17 +142,33 @@
                     <VerticalStackLayout Spacing="8">
                         <Label Text="Drive" FontSize="14" FontAttributes="Bold" 
                                TextColor="{StaticResource Gray500}" 
-                               CharacterSpacing="1.5"/>
+                               CharacterSpacing="1.5">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsConnected}" Value="False">
+                                    <Setter Property="Opacity" Value="0.5"/>
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
                         <Label Text="Drag to drive · Release to stop" 
                                FontSize="12" 
                                TextColor="{StaticResource Gray400}" 
-                               HorizontalOptions="Center"/>
+                               HorizontalOptions="Center">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsConnected}" Value="False">
+                                    <Setter Property="Text" Value="Connect to a device to drive"/>
+                                    <Setter Property="Opacity" Value="0.5"/>
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
 
                         <views:JoystickView 
                             HeightRequest="260" 
                             WidthRequest="260"
                             HorizontalOptions="Center"
                             Margin="0,4"
+                            IsEnabled="{Binding IsConnected}"
+                            SemanticProperties.Description="Drive joystick"
+                            SemanticProperties.Hint="Drag to control R2-D2 movement, release to stop"
                             MovedCommand="{Binding JoystickMovedCommand}"
                             ReleasedCommand="{Binding JoystickReleasedCommand}"/>
                     </VerticalStackLayout>
@@ -129,7 +183,13 @@
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Sounds" FontSize="14" FontAttributes="Bold" 
                                TextColor="{StaticResource Gray500}" 
-                               CharacterSpacing="1.5"/>
+                               CharacterSpacing="1.5">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsConnected}" Value="False">
+                                    <Setter Property="Opacity" Value="0.5"/>
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
 
                         <FlexLayout Wrap="Wrap" JustifyContent="Center" AlignItems="Start">
                             <BindableLayout.ItemsSource>
@@ -163,14 +223,9 @@
                                     <Button Text="{Binding}" 
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ControllerViewModel}}, Path=PlaySoundCommand}"
                                             CommandParameter="{Binding}"
-                                            Margin="3"
-                                            Padding="10,6"
-                                            FontSize="12"
-                                            CornerRadius="14"
-                                            MinimumWidthRequest="70"
-                                            HeightRequest="34"
-                                            MinimumHeightRequest="34"
-                                            BackgroundColor="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource Primary}}"/>
+                                            IsEnabled="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ControllerViewModel}}, Path=IsConnected}"
+                                            Style="{StaticResource SoundButtonStyle}"
+                                            SemanticProperties.Description="{Binding StringFormat='Play {0} sound effect'}"/>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
                         </FlexLayout>

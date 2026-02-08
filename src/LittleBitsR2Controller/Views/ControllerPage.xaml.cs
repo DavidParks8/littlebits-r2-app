@@ -9,4 +9,13 @@ public partial class ControllerPage : ContentPage
         InitializeComponent();
         BindingContext = viewModel;
     }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        if (BindingContext is ControllerViewModel vm && !vm.IsConnected && !vm.IsScanning)
+        {
+            await vm.ScanForDevicesCommand.ExecuteAsync(null);
+        }
+    }
 }
