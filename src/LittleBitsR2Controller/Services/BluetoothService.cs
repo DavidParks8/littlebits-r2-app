@@ -1,6 +1,8 @@
 using Plugin.BLE.Abstractions;
 using Plugin.BLE.Abstractions.Contracts;
 using Plugin.BLE.Abstractions.EventArgs;
+using Microsoft.Extensions.Logging;
+using LittleBitsR2Controller.Logging;
 
 namespace LittleBitsR2Controller.Services;
 
@@ -8,6 +10,7 @@ public class BluetoothService : IBluetoothService, IDisposable
 {
     private readonly IBluetoothLE _bluetoothLE;
     private readonly IAdapter _adapter;
+    private readonly ILogger<BluetoothService> _logger;
     private readonly WeakEventManager _connectionStatusChangedEventManager = new();
     private IDevice? _connectedDevice;
     private ICharacteristic? _writeCharacteristic;
@@ -46,10 +49,11 @@ public class BluetoothService : IBluetoothService, IDisposable
         (name.StartsWith("w32", StringComparison.OrdinalIgnoreCase) ||
          name.StartsWith("R2D2", StringComparison.OrdinalIgnoreCase));
 
-    public BluetoothService(IBluetoothLE bluetoothLE, IAdapter adapter)
+    public BluetoothService(IBluetoothLE bluetoothLE, IAdapter adapter, ILogger<BluetoothService> logger)
     {
         _bluetoothLE = bluetoothLE ?? throw new ArgumentNullException(nameof(bluetoothLE));
         _adapter = adapter ?? throw new ArgumentNullException(nameof(adapter));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         
         _adapter.DeviceConnected += OnDeviceConnected;
         _adapter.DeviceDisconnected += OnDeviceDisconnected;
@@ -88,18 +92,18 @@ public class BluetoothService : IBluetoothService, IDisposable
                 // unnamed devices get a fallback name and are kept.
                 if (!string.IsNullOrEmpty(device.Name) && !IsR2D2DeviceName(device.Name))
                 {
-                    System.Diagnostics.Debug.WriteLine($"[BLE] Skipping paired device with non-R2D2 name: '{device.Name}' ({id})");
+                    _logger.LogSkippingPairedDevice(device.Name, id);
                     continue;
                 }
 
                 var name = !string.IsNullOrEmpty(device.Name) ? device.Name : $"R2D2 ({id[..8]})";
                 devices.Add(new BluetoothDevice(id, name));
-                System.Diagnostics.Debug.WriteLine($"[BLE] Paired device found: {name} ({id})");
+                _logger.LogPairedDeviceFound(name, id);
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[BLE] Error checking paired devices: {ex.Message}");
+            _logger.LogErrorCheckingPairedDevices(ex.Message);
         }
 
         // Phase 2: Active BLE scan filtered by the R2D2 service UUID.
@@ -116,8 +120,7 @@ public class BluetoothService : IBluetoothService, IDisposable
                 {
                     scanResults.Add(e.Device);
                 }
-                System.Diagnostics.Debug.WriteLine(
-                    $"[BLE] Scan discovered: Name='{e.Device.Name}', Id={e.Device.Id}");
+                _logger.LogScanDiscovered(e.Device.Name, e.Device.Id);
             }
         };
 
@@ -148,15 +151,13 @@ public class BluetoothService : IBluetoothService, IDisposable
             devices.Add(new BluetoothDevice(id, name));
         }
 
-        System.Diagnostics.Debug.WriteLine(
-            $"[BLE] Scan complete. Found {devices.Count} R2D2 device(s) out of {scanResults.Count} scanned.");
+        _logger.LogScanComplete(devices.Count, scanResults.Count);
 
         // Phase 3: If service-UUID scan found nothing, do an unfiltered scan
         // and show all devices so the user can manually pick the R2D2.
         if (devices.Count == 0)
         {
-            System.Diagnostics.Debug.WriteLine(
-                "[BLE] No devices found with R2D2 service UUID. Running unfiltered scan...");
+            _logger.LogRunningUnfilteredScan();
 
             scanResults.Clear();
             seen.Clear();
@@ -184,13 +185,11 @@ public class BluetoothService : IBluetoothService, IDisposable
                 if (IsR2D2DeviceName(device.Name))
                 {
                     devices.Add(new BluetoothDevice(id, device.Name));
-                    System.Diagnostics.Debug.WriteLine(
-                        $"[BLE] Unfiltered device: Name='{device.Name}', Id={id}");
+                    _logger.LogUnfilteredDevice(device.Name, id);
                 }
             }
 
-            System.Diagnostics.Debug.WriteLine(
-                $"[BLE] Unfiltered scan complete. Showing {devices.Count} named device(s).");
+            _logger.LogUnfilteredScanComplete(devices.Count);
         }
 
         return devices;
@@ -237,7 +236,7 @@ public class BluetoothService : IBluetoothService, IDisposable
                 catch (InvalidOperationException)
                 {
                     // Characteristic may not support WriteWithoutResponse; fall back to default
-                    System.Diagnostics.Debug.WriteLine("[BLE] WriteWithoutResponse not supported, using default write type.");
+                    _logger.LogWriteWithoutResponseNotSupported();
                 }
             }
 
@@ -253,7 +252,7 @@ public class BluetoothService : IBluetoothService, IDisposable
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error connecting to device: {ex.Message}");
+            _logger.LogErrorConnectingToDevice(ex.Message);
             return false;
         }
     }
@@ -300,7 +299,7 @@ public class BluetoothService : IBluetoothService, IDisposable
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error sending command: {ex.Message}");
+            _logger.LogErrorSendingCommand(ex.Message);
         }
         finally
         {
@@ -333,7 +332,7 @@ public class BluetoothService : IBluetoothService, IDisposable
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error sending stop command: {ex.Message}");
+            _logger.LogErrorSendingStopCommand(ex.Message);
         }
         finally
         {
@@ -359,7 +358,7 @@ public class BluetoothService : IBluetoothService, IDisposable
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error sending sound command: {ex.Message}");
+            _logger.LogErrorSendingSoundCommand(ex.Message);
         }
         finally
         {
@@ -382,7 +381,7 @@ public class BluetoothService : IBluetoothService, IDisposable
         // If the disconnect was unexpected and we know the device, start auto-reconnect
         if (!_isUserDisconnect && _lastConnectedDevice != null)
         {
-            System.Diagnostics.Debug.WriteLine("[BLE] Unexpected disconnect. Starting auto-reconnect...");
+            _logger.LogUnexpectedDisconnect();
             StartReconnectLoop(_lastConnectedDevice);
         }
     }
@@ -397,7 +396,7 @@ public class BluetoothService : IBluetoothService, IDisposable
         StopHealthCheck();
         _consecutiveHealthFailures = 0;
         _healthCheckTimer = new System.Threading.Timer(HealthCheckCallback, null, HealthCheckIntervalMs, HealthCheckIntervalMs);
-        System.Diagnostics.Debug.WriteLine("[BLE] Connection health monitor started.");
+        _logger.LogHealthCheckStarted();
     }
 
     private void StopHealthCheck()
@@ -447,14 +446,12 @@ public class BluetoothService : IBluetoothService, IDisposable
     private void HandleHealthCheckFailure(string reason)
     {
         _consecutiveHealthFailures++;
-        System.Diagnostics.Debug.WriteLine(
-            $"[BLE] Health check failure #{_consecutiveHealthFailures}: {reason}");
+        _logger.LogHealthCheckFailure(_consecutiveHealthFailures, reason);
 
         // Require 2 consecutive failures to avoid transient BLE hiccups
         if (_consecutiveHealthFailures >= 2)
         {
-            System.Diagnostics.Debug.WriteLine(
-                "[BLE] Device presumed offline. Triggering disconnect/reconnect.");
+            _logger.LogDevicePresumedOffline();
             StopHealthCheck();
 
             // Manually trigger the same flow as OnDeviceDisconnected
@@ -487,8 +484,7 @@ public class BluetoothService : IBluetoothService, IDisposable
                     // Wait before attempting (gives the device time to boot)
                     await Task.Delay(ReconnectDelayMs, token);
 
-                    System.Diagnostics.Debug.WriteLine(
-                        $"[BLE] Reconnect attempt {attempt}/{ReconnectMaxAttempts} to {device.Name}...");
+                    _logger.LogReconnectAttempt(attempt, ReconnectMaxAttempts, device.Name);
 
                     var deviceId = Guid.Parse(device.Id);
                     var bleDevice = await _adapter.ConnectToKnownDeviceAsync(deviceId, cancellationToken: token);
@@ -518,14 +514,13 @@ public class BluetoothService : IBluetoothService, IDisposable
                         }
                         catch (InvalidOperationException)
                         {
-                            System.Diagnostics.Debug.WriteLine("[BLE] WriteWithoutResponse not supported on reconnect.");
+                            _logger.LogWriteWithoutResponseNotSupportedOnReconnect();
                         }
                     }
 
                     if (IsConnected && _writeCharacteristic != null)
                     {
-                        System.Diagnostics.Debug.WriteLine(
-                            $"[BLE] Reconnected to {device.Name} after {attempt} attempt(s).");
+                        _logger.LogReconnected(device.Name, attempt);
                         IsReconnecting = false;
                         _isUserDisconnect = false;
                         StartHealthCheck();
@@ -543,14 +538,12 @@ public class BluetoothService : IBluetoothService, IDisposable
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine(
-                        $"[BLE] Reconnect attempt {attempt} failed: {ex.Message}");
+                    _logger.LogReconnectAttemptFailed(attempt, ex.Message);
                 }
             }
 
             IsReconnecting = false;
-            System.Diagnostics.Debug.WriteLine(
-                "[BLE] Auto-reconnect gave up after max attempts.");
+            _logger.LogReconnectGaveUp();
         }, token);
     }
 
